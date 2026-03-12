@@ -168,80 +168,88 @@ export default function Habits() {
   }
 
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="animate-fade-in-up space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Habits</h1>
-          <p className="text-muted-foreground text-sm mt-1">{habits.length} habits tracked</p>
+          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">Habits</h1>
+          <p className="text-muted-foreground text-sm mt-2">{habits.length} habits tracked</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) resetForm() }}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white border-0 gap-2">
-              <Plus className="w-4 h-4" />
+            <Button className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-400 hover:to-indigo-400 text-white border-0 shadow-[0_4px_14px_0_rgba(139,92,246,0.39)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.23)] hover:-translate-y-0.5 transition-all duration-200 gap-2 h-11 px-6 rounded-xl font-semibold">
+              <Plus className="w-5 h-5" />
               New Habit
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Create New Habit</DialogTitle></DialogHeader>
+          <DialogContent className="glass border-white/10 sm:rounded-2xl">
+            <DialogHeader><DialogTitle className="text-xl font-bold">Create New Habit</DialogTitle></DialogHeader>
             <HabitForm onSubmit={handleCreate} submitLabel="Create Habit" />
           </DialogContent>
         </Dialog>
       </div>
 
       {habits.length === 0 ? (
-        <div className="glass rounded-xl p-12 text-center">
-          <Dumbbell className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-          <p className="text-foreground font-medium">No habits yet</p>
-          <p className="text-muted-foreground text-sm mt-1">Create your first habit to get started</p>
+        <div className="glass rounded-3xl p-16 text-center border-dashed border-2 border-white/10">
+          <div className="w-20 h-20 mx-auto bg-white/5 rounded-full flex items-center justify-center mb-6 shadow-inner">
+            <Dumbbell className="w-10 h-10 text-muted-foreground/50" />
+          </div>
+          <p className="text-xl text-foreground font-bold">No habits yet</p>
+          <p className="text-muted-foreground mt-2">Create your first habit to get started</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {habits.map((habit) => (
-            <div key={habit.id} className="glass-hover rounded-xl p-5 flex flex-col gap-4">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: habit.color }} />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {habits.map((habit, i) => (
+            <div 
+              key={habit.id} 
+              className="glass-hover rounded-2xl p-6 flex flex-col gap-5 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_12px_40px_-10px_rgba(0,0,0,0.4)] transition-all duration-300 animate-fade-in-up"
+              style={{ animationDelay: `${i * 100}ms` }}
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none" style={{ backgroundColor: habit.color }} />
+              
+              <div className="flex items-start justify-between gap-2 relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="w-4 h-8 rounded-full flex-shrink-0 shadow-lg" style={{ backgroundColor: habit.color, boxShadow: `0 0 15px ${habit.color}60` }} />
                   <div>
-                    <p className="font-semibold text-foreground">{habit.name}</p>
+                    <p className="text-lg font-bold text-foreground group-hover:text-white transition-colors">{habit.name}</p>
                     {habit.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{habit.description}</p>
+                      <p className="text-sm text-muted-foreground/80 mt-1 line-clamp-2">{habit.description}</p>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <Dialog open={editingHabit?.id === habit.id} onOpenChange={(open) => { if (!open) { setEditingHabit(null); resetForm() } }}>
                     <DialogTrigger asChild>
-                      <button onClick={() => openEdit(habit)} className="p-1.5 rounded-md hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors">
-                        <Pencil className="w-3.5 h-3.5" />
+                      <button onClick={() => openEdit(habit)} className="p-2 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-white transition-colors">
+                        <Pencil className="w-4 h-4" />
                       </button>
                     </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader><DialogTitle>Edit Habit</DialogTitle></DialogHeader>
+                    <DialogContent className="glass border-white/10 sm:rounded-2xl">
+                      <DialogHeader><DialogTitle className="text-xl font-bold">Edit Habit</DialogTitle></DialogHeader>
                       <HabitForm onSubmit={handleUpdate} submitLabel="Save Changes" />
                     </DialogContent>
                   </Dialog>
-                  <button onClick={() => handleDelete(habit.id)} className="p-1.5 rounded-md hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
+                  <button onClick={() => handleDelete(habit.id)} className="p-2 rounded-lg hover:bg-red-500/20 text-muted-foreground hover:text-red-400 transition-colors">
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <div className="flex-1 glass rounded-lg p-3 text-center">
-                  <div className="flex items-center justify-center gap-1 text-orange-400 mb-1">
-                    <Flame className="w-3.5 h-3.5" />
-                    <span className="text-xs font-medium">Current</span>
+              <div className="flex gap-4 relative z-10 mt-2">
+                <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5 group-hover:border-white/10 transition-colors">
+                  <div className="flex items-center justify-center gap-1.5 text-orange-400 mb-2">
+                    <Flame className="w-4 h-4" />
+                    <span className="text-xs font-bold tracking-wider uppercase">Current</span>
                   </div>
-                  <p className="text-xl font-bold text-foreground">{habit.current_streak}</p>
-                  <p className="text-[10px] text-muted-foreground">days</p>
+                  <p className="text-2xl font-black text-foreground">{habit.current_streak}</p>
+                  <p className="text-xs text-muted-foreground font-medium mt-0.5">days</p>
                 </div>
-                <div className="flex-1 glass rounded-lg p-3 text-center">
-                  <div className="flex items-center justify-center gap-1 text-yellow-400 mb-1">
-                    <Trophy className="w-3.5 h-3.5" />
-                    <span className="text-xs font-medium">Best</span>
+                <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5 group-hover:border-white/10 transition-colors">
+                  <div className="flex items-center justify-center gap-1.5 text-yellow-400 mb-2">
+                    <Trophy className="w-4 h-4" />
+                    <span className="text-xs font-bold tracking-wider uppercase">Best</span>
                   </div>
-                  <p className="text-xl font-bold text-foreground">{habit.longest_streak}</p>
-                  <p className="text-[10px] text-muted-foreground">days</p>
+                  <p className="text-2xl font-black text-foreground">{habit.longest_streak}</p>
+                  <p className="text-xs text-muted-foreground font-medium mt-0.5">days</p>
                 </div>
               </div>
             </div>

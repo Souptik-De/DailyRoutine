@@ -85,64 +85,71 @@ export default function Journal() {
   }
 
   return (
-    <div className="animate-fade-in space-y-6 max-w-2xl">
+    <div className="animate-fade-in-up space-y-8 max-w-3xl mx-auto pb-12">
       <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-pink-400" />
-            <h1 className="text-3xl font-bold text-foreground">Journal</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center border border-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.15)] overflow-hidden relative">
+              <div className="absolute inset-0 bg-white/5" />
+              <BookOpen className="w-6 h-6 text-pink-400 relative z-10" />
+            </div>
+            <h1 className="text-4xl font-extrabold text-foreground tracking-tight">Journal</h1>
           </div>
-          <p className="text-muted-foreground text-sm mt-1">{todayDisplay}</p>
+          <p className="text-muted-foreground text-sm font-medium tracking-wide ml-[60px]">{todayDisplay}</p>
         </div>
         {entry && (
           <button
             onClick={handleDelete}
-            className="p-2 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors"
+            className="p-3 rounded-xl hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors group"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
           </button>
         )}
       </div>
 
       {/* Word count & status */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
+      <div className="flex items-center justify-between text-sm font-medium text-muted-foreground px-2">
         <span>{wordCount} {wordCount === 1 ? "word" : "words"}</span>
         {entry && (
-          <span>Last saved: {format(new Date(entry.updated_at), "h:mm a")}</span>
+          <span className="flex items-center gap-1.5 opacity-80">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Last saved: {format(new Date(entry.updated_at), "h:mm a")}
+          </span>
         )}
       </div>
 
       {/* Editor */}
-      <div className="relative">
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-pink-500/30 to-violet-500/30 rounded-[2rem] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700 pointer-events-none" />
         <Textarea
           value={content}
           onChange={(e) => { setContent(e.target.value); setSaved(false) }}
           placeholder="What's on your mind today? Reflect on your goals, feelings, and experiences..."
-          className="min-h-[420px] text-base leading-relaxed p-5 rounded-xl border-white/10 bg-white/3 resize-none focus-visible:ring-pink-500/40"
+          className="min-h-[500px] text-lg leading-relaxed p-8 rounded-3xl border-white/10 bg-black/40 resize-none focus-visible:ring-1 focus-visible:ring-pink-500/50 shadow-[0_8px_40px_rgba(0,0,0,0.3)] backdrop-blur-3xl transition-all duration-300 relative z-10 placeholder:text-muted-foreground/30 font-medium"
         />
       </div>
 
       {/* Save button */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4 px-2">
         <Button
           onClick={handleSave}
           disabled={saving || !content.trim()}
           className={cn(
-            "gap-2",
+            "gap-2 h-12 px-8 rounded-xl font-bold shadow-[0_4px_14px_0_rgba(236,72,153,0.39)] hover:shadow-[0_6px_20px_rgba(236,72,153,0.23)] hover:-translate-y-0.5 transition-all duration-200 text-base",
             saved
-              ? "bg-emerald-500 hover:bg-emerald-600 text-white border-0"
+              ? "bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-[0_4px_14px_0_rgba(16,185,129,0.39)]"
               : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0"
           )}
         >
           {saved ? (
-            <><CheckCircle2 className="w-4 h-4" /> Saved!</>
+            <><CheckCircle2 className="w-5 h-5" /> Saved!</>
           ) : saving ? (
-            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
+            <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</>
           ) : (
-            <><Save className="w-4 h-4" /> {entry ? "Update Entry" : "Save Entry"}</>
+            <><Save className="w-5 h-5" /> {entry ? "Update Entry" : "Save Entry"}</>
           )}
         </Button>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-sm font-medium text-muted-foreground/80">
           {entry ? "Entry exists for today" : "No entry yet for today"}
         </span>
       </div>

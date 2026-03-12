@@ -13,9 +13,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen noise-bg">
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 glass border-r border-white/5 flex flex-col py-6 px-4 fixed h-full z-10">
+      <aside className="w-64 flex-shrink-0 glass border-r border-white/5 flex flex-col py-6 px-4 fixed h-full z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
         {/* Logo */}
         <div className="flex items-center gap-2 px-2 mb-10">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-500/30">
@@ -36,19 +36,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 key={href}
                 to={href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden group",
                   isActive
-                    ? "bg-gradient-to-r from-violet-500/20 to-indigo-500/10 text-violet-300 border border-violet-500/20"
+                    ? "text-white bg-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] ring-1 ring-white/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                 )}
               >
+                {isActive && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500/30 to-transparent opacity-80 mix-blend-overlay" />
+                )}
                 <Icon
                   className={cn(
-                    "w-4 h-4 transition-colors",
-                    isActive ? "text-violet-400" : "text-muted-foreground"
+                    "w-4 h-4 transition-all duration-300 relative z-10",
+                    isActive ? "text-violet-300 drop-shadow-[0_0_8px_rgba(167,139,250,0.8)] scale-110" : "text-muted-foreground group-hover:scale-110"
                   )}
                 />
-                {label}
+                <span className="relative z-10">{label}</span>
               </Link>
             )
           })}
@@ -56,9 +59,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Demo badge */}
         <div className="mt-auto px-2">
-          <div className="glass rounded-lg p-3 text-center">
-            <p className="text-xs text-muted-foreground">Logged in as</p>
-            <p className="text-sm font-medium text-foreground mt-0.5">Demo User</p>
+          <div className="glass rounded-xl p-4 text-center border-t border-white/10 bg-gradient-to-b from-white/5 to-transparent">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-1.5 hidden lg:block">Account</p>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              <p className="text-sm font-bold text-foreground">Demo User</p>
+            </div>
           </div>
         </div>
       </aside>

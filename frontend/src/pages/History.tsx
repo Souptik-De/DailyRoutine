@@ -74,15 +74,16 @@ export default function History() {
   const selectedDayData = selectedDay ? monthData[selectedDay] : null
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="animate-fade-in-up space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">History</h1>
-        <p className="text-muted-foreground text-sm mt-1">Your journey through the days</p>
+        <h1 className="text-4xl font-extrabold text-foreground tracking-tight">History</h1>
+        <p className="text-muted-foreground text-sm font-medium mt-2">Your journey through the days</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Calendar */}
-        <div className="lg:col-span-2 glass rounded-xl p-5">
+        <div className="lg:col-span-2 glass rounded-3xl p-8 relative overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 rounded-full blur-[80px] pointer-events-none" />
           {/* Month nav */}
           <div className="flex items-center justify-between mb-5">
             <Button
@@ -138,22 +139,22 @@ export default function History() {
                     key={dateStr}
                     onClick={() => setSelectedDay(isSelected ? null : dateStr)}
                     className={cn(
-                      "relative aspect-square flex flex-col items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 hover:bg-white/10",
+                      "relative aspect-square flex flex-col items-center justify-center rounded-2xl text-base font-bold transition-all duration-300 hover:scale-[1.05] hover:bg-white/10 hover:shadow-lg",
                       !isSameMonth(day, currentMonth) && "opacity-30",
-                      today && "ring-1 ring-violet-500/60",
-                      isSelected && "bg-violet-500/20 ring-1 ring-violet-500"
+                      today && !isSelected && "ring-2 ring-violet-500/80 shadow-[0_0_15px_rgba(139,92,246,0.3)] text-violet-300",
+                      isSelected && "bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-[0_0_20px_rgba(139,92,246,0.5)] scale-110 z-10 border-0 ring-2 ring-white/20"
                     )}
                     style={{
                       background: rate > 0 && !isSelected
-                        ? `rgba(139, 92, 246, ${rate * 0.35})`
+                        ? `rgba(139, 92, 246, ${rate * 0.4})`
                         : undefined,
                     }}
                   >
-                    <span className={cn("text-xs", today ? "text-violet-300" : "text-foreground")}>
+                    <span className={cn("relative z-10", !isSelected && today ? "text-violet-300" : (isSelected ? "text-white" : "text-foreground"))}>
                       {format(day, "d")}
                     </span>
                     {hasJournal && (
-                      <div className="absolute bottom-1 w-1 h-1 rounded-full bg-pink-400" />
+                      <div className={cn("absolute bottom-2 w-1.5 h-1.5 rounded-full transition-colors", isSelected ? "bg-white" : "bg-pink-400")} />
                     )}
                   </button>
                 )
@@ -175,36 +176,40 @@ export default function History() {
         </div>
 
         {/* Day detail panel */}
-        <div className="glass rounded-xl p-5 flex flex-col gap-4">
+        <div className="glass rounded-3xl p-8 flex flex-col gap-8 relative overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.25)] animate-fade-in-up" style={{ animationDelay: "100ms" }}>
           {selectedDay ? (
             <>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium mb-1">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-pink-500/10 rounded-full blur-[60px] pointer-events-none" />
+              <div className="relative z-10">
+                <p className="text-xs text-violet-400 uppercase tracking-[0.2em] font-bold mb-2">
                   {format(parseISO(selectedDay), "EEEE")}
                 </p>
-                <h3 className="text-xl font-bold text-foreground">
+                <h3 className="text-3xl font-extrabold text-foreground tracking-tight">
                   {format(parseISO(selectedDay), "MMMM d, yyyy")}
                 </h3>
               </div>
 
               {/* Habits */}
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-2">HABITS</p>
+              <div className="relative z-10">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                  Habits
+                </p>
                 {habits.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No habits tracked</p>
+                  <p className="text-sm text-muted-foreground/80 italic">No habits tracked</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {habits.map((habit) => {
                       const done = selectedDayData?.completedHabitIds.includes(habit.id) ?? false
                       return (
-                        <div key={habit.id} className="flex items-center gap-2">
+                        <div key={habit.id} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
                           {done ? (
-                            <CheckCircle2 className="w-4 h-4 text-violet-400 flex-shrink-0" />
+                            <CheckCircle2 className="w-5 h-5 text-violet-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)] flex-shrink-0" />
                           ) : (
-                            <Circle className="w-4 h-4 text-white/20 flex-shrink-0" />
+                            <Circle className="w-5 h-5 text-white/20 flex-shrink-0" />
                           )}
-                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: habit.color }} />
-                          <span className={cn("text-sm", done ? "text-foreground" : "text-muted-foreground")}>
+                          <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: habit.color, boxShadow: `0 0 8px ${habit.color}80` }} />
+                          <span className={cn("text-base font-semibold", done ? "text-foreground" : "text-muted-foreground")}>
                             {habit.name}
                           </span>
                         </div>
@@ -215,28 +220,30 @@ export default function History() {
               </div>
 
               {/* Journal */}
-              <div className="flex-1">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <BookOpen className="w-3.5 h-3.5 text-pink-400" />
-                  <p className="text-xs font-medium text-muted-foreground">JOURNAL</p>
+              <div className="flex-1 relative z-10">
+                <div className="flex items-center gap-2 mb-4">
+                  <BookOpen className="w-4 h-4 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]" />
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Journal</p>
                 </div>
                 {selectedDayData?.journal ? (
-                  <p className="text-sm text-foreground/80 leading-relaxed line-clamp-[10]">
-                    {selectedDayData.journal}
-                  </p>
+                  <div className="bg-white/5 p-5 rounded-2xl border border-white/5 backdrop-blur-sm">
+                    <p className="text-base text-foreground/90 leading-relaxed font-medium">
+                      {selectedDayData.journal}
+                    </p>
+                  </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground italic">No journal entry for this day</p>
+                  <p className="text-sm text-muted-foreground/80 italic bg-white/5 p-5 rounded-2xl border border-white/5">No journal entry for this day</p>
                 )}
               </div>
             </>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center gap-3 py-8">
-              <div className="w-12 h-12 rounded-xl glass flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-muted-foreground/40" />
+            <div className="h-full flex flex-col items-center justify-center text-center gap-5 py-12">
+              <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner">
+                <CheckCircle2 className="w-10 h-10 text-muted-foreground/30" />
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Select a day</p>
-                <p className="text-xs text-muted-foreground mt-1">Click any day to see that day's habits and journal entry</p>
+                <p className="text-xl font-bold text-foreground">Select a day</p>
+                <p className="text-sm text-muted-foreground mt-2 max-w-[200px] mx-auto">Click any day from the calendar to see details</p>
               </div>
             </div>
           )}
