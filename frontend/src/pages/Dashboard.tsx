@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react"
 import { format } from "date-fns"
 import { habitsApi, completionsApi } from "@/lib/api"
 import { Checkbox } from "@/components/ui/checkbox"
-import { BookOpen, Flame, TrendingUp, CheckCircle2, Circle, ArrowRight } from "lucide-react"
+import { BookOpen, Flame, Trophy, TrendingUp, CheckCircle2, Circle, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link } from "react-router-dom"
 
@@ -197,13 +197,23 @@ export default function Dashboard() {
                     <p className="text-xs text-muted-foreground/80 truncate mt-0.5">{habit.description}</p>
                   )}
                 </div>
-                {streak && streak.current_streak > 0 && (
-                  <div className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0 transition-all duration-300",
-                    hotStreak ? "bg-orange-500/10 ring-1 ring-orange-500/30 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.15)]" : "bg-white/5 text-muted-foreground"
-                  )}>
-                    <Flame className={cn("w-3.5 h-3.5", hotStreak && "animate-pulse")} />
-                    <span className="font-bold text-sm tracking-wide">{streak.current_streak}</span>
+                {streak && (
+                  <div className="flex items-center gap-2">
+                    {streak.current_streak > 0 && (
+                      <div className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0 transition-all duration-300",
+                        hotStreak ? "bg-orange-500/10 ring-1 ring-orange-500/30 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.15)]" : "bg-white/5 text-muted-foreground"
+                      )}>
+                        <Flame className={cn("w-3.5 h-3.5", hotStreak && "animate-pulse")} />
+                        <span className="font-bold text-sm tracking-wide">{streak.current_streak}</span>
+                      </div>
+                    )}
+                    {streak.longest_streak > 0 && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0 transition-all duration-300 bg-yellow-500/10 ring-1 ring-yellow-500/30 text-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:scale-105">
+                        <Trophy className="w-3.5 h-3.5" />
+                        <span className="font-bold text-sm tracking-wide">{streak.longest_streak}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

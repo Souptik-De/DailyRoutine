@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, subMonths, addMonths, parseISO, setMonth, setYear } from "date-fns"
 import { habitsApi, completionsApi, journalsApi } from "@/lib/api"
-import { ChevronLeft, ChevronRight, CheckCircle2, BookOpen, Circle } from "lucide-react"
+import { ChevronLeft, ChevronRight, CheckCircle2, BookOpen, Circle, Flame, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -26,6 +26,8 @@ interface Habit {
   id: string
   name: string
   color: string
+  current_streak?: number
+  longest_streak?: number
 }
 
 interface DayData {
@@ -52,7 +54,14 @@ export default function History() {
         journalsApi.list(),
       ])
 
-      setHabits(habitsRes.data.map((h: Habit) => ({ id: h.id, name: h.name, color: h.color })))
+      const habitsData = habitsRes.data as { id: string, name: string, color: string }[]
+      const withStreaks = await Promise.all(
+        habitsData.map(async (h) => {
+          const streakRes = await habitsApi.getStreak(h.id)
+          return { ...h, current_streak: streakRes.data.current_streak, longest_streak: streakRes.data.longest_streak }
+        })
+      )
+      setHabits(withStreaks)
 
       const journalsByDate: Record<string, { content: string, updated_at: string }> = {}
       for (const entry of journalsRes.data) {
@@ -339,6 +348,27 @@ export default function History() {
                                 <DialogDescription className="text-base text-white/90 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5">
                                   {done ? "You completed this habit on this day! Keep up the good work." : "You missed this habit on this day. Don't give up and try again tomorrow!"}
                                 </DialogDescription>
+                                
+                                {typeof habit.current_streak === 'number' && (
+                                  <div className="flex gap-4 mt-6">
+                                    <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5">
+                                      <div className="flex items-center justify-center gap-1.5 text-orange-400 mb-2">
+                                        <Flame className="w-4 h-4 text-orange-400 drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
+                                        <span className="text-xs font-bold tracking-wider uppercase text-orange-200">Current</span>
+                                      </div>
+                                      <p className="text-2xl font-black text-white">{habit.current_streak}</p>
+                                      <p className="text-xs text-muted-foreground font-medium mt-0.5">days</p>
+                                    </div>
+                                    <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5">
+                                      <div className="flex items-center justify-center gap-1.5 text-yellow-400 mb-2">
+                                        <Trophy className="w-4 h-4 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]" />
+                                        <span className="text-xs font-bold tracking-wider uppercase text-yellow-200">Best</span>
+                                      </div>
+                                      <p className="text-2xl font-black text-white">{habit.longest_streak}</p>
+                                      <p className="text-xs text-muted-foreground font-medium mt-0.5">days</p>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                               <DialogClose />
                             </DialogContent>
