@@ -136,7 +136,17 @@ export default function Journal() {
         {entry && (
           <span className="flex items-center gap-1.5 opacity-80">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Last saved: {format(new Date(entry.updated_at), "h:mm a")}
+            Last saved: {(() => {
+              const utcStr = entry.updated_at || entry.created_at;
+              if (!utcStr) return "Unknown";
+              const date = new Date(utcStr + (utcStr.endsWith("Z") ? "" : "Z"));
+              return new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Kolkata',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true
+              }).format(date) + " IST";
+            })()}
           </span>
         )}
       </div>

@@ -10,6 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContainer,
+  DialogContent,
+  DialogClose,
+  DialogTitle,
+  DialogSubtitle,
+  DialogDescription,
+} from "@/components/ui/linear-modal"
 import { cn } from "@/lib/utils"
 
 interface Habit {
@@ -20,7 +30,7 @@ interface Habit {
 
 interface DayData {
   completedHabitIds: string[]
-  journal: string | null
+  journal: { content: string, updated_at: string } | null
 }
 
 export default function History() {
@@ -44,9 +54,9 @@ export default function History() {
 
       setHabits(habitsRes.data.map((h: Habit) => ({ id: h.id, name: h.name, color: h.color })))
 
-      const journalsByDate: Record<string, string> = {}
+      const journalsByDate: Record<string, { content: string, updated_at: string }> = {}
       for (const entry of journalsRes.data) {
-        journalsByDate[entry.date] = entry.content
+        journalsByDate[entry.date] = { content: entry.content, updated_at: entry.updated_at }
       }
 
       const data: Record<string, DayData> = {}
@@ -212,17 +222,83 @@ export default function History() {
         </div>
 
         {/* Day detail panel */}
-        <div className="glass rounded-3xl p-8 flex flex-col gap-8 relative overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.25)] animate-fade-in-up" style={{ animationDelay: "100ms" }}>
+        <div className="glass rounded-3xl p-8 flex flex-col gap-8 relative overflow-y-auto shadow-[0_8px_40px_rgba(0,0,0,0.25)] animate-fade-in-up md:max-h-[calc(100vh-12rem)] md:sticky md:top-24 flex-shrink-0" style={{ animationDelay: "100ms" }}>
           {selectedDay ? (
             <>
               <div className="absolute top-0 right-0 w-48 h-48 bg-pink-500/10 rounded-full blur-[60px] pointer-events-none" />
-              <div className="relative z-10">
+              <div className="relative z-10 flex-shrink-0">
                 <p className="text-xs text-violet-400 uppercase tracking-[0.2em] font-bold mb-2">
                   {format(parseISO(selectedDay), "EEEE")}
                 </p>
                 <h3 className="text-3xl font-extrabold text-foreground tracking-tight">
                   {format(parseISO(selectedDay), "MMMM d, yyyy")}
                 </h3>
+              </div>
+
+              {/* Journal */}
+              <div className="flex-1 relative z-10">
+                <div className="flex items-center gap-2 mb-4">
+                  <BookOpen className="w-4 h-4 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]" />
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Journal</p>
+                </div>
+                {selectedDayData?.journal ? (
+                  <Dialog>
+                    <DialogTrigger className="w-full text-left">
+                      <div className="bg-white/5 p-5 rounded-2xl border border-white/5 backdrop-blur-sm hover:bg-white/10 cursor-pointer transition-colors block">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="text-base text-foreground/90 leading-relaxed font-medium line-clamp-3">
+                            {selectedDayData.journal.content}
+                          </p>
+                        </div>
+                        <div className="text-xs text-muted-foreground text-right mt-2 opacity-80">
+                          Last edited: {(() => {
+                            const utcStr = selectedDayData.journal.updated_at;
+                            if (!utcStr) return "Unknown";
+                            const date = new Date(utcStr + (utcStr.endsWith("Z") ? "" : "Z"));
+                            return new Intl.DateTimeFormat('en-US', {
+                              timeZone: 'Asia/Kolkata',
+                              hour: 'numeric',
+                              minute: 'numeric',
+                              hour12: true
+                            }).format(date) + " IST";
+                          })()}
+                        </div>
+                      </div>
+                    </DialogTrigger>
+                    <DialogContainer>
+                      <DialogContent className="pointer-events-auto relative flex h-auto w-full max-w-[600px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/90 shadow-2xl backdrop-blur-2xl">
+                        <div className="p-8 max-h-[80vh] overflow-y-auto">
+                          <DialogTitle className="text-3xl font-bold text-pink-400 mb-2 flex items-center gap-3">
+                            <BookOpen className="w-6 h-6" />
+                            Journal Entry
+                          </DialogTitle>
+                          <DialogSubtitle className="text-muted-foreground mb-8 font-medium flex items-center justify-between">
+                            <span>{format(parseISO(selectedDay!), "EEEE, MMMM d, yyyy")}</span>
+                            <span className="text-xs opacity-70">
+                              Last edited: {(() => {
+                                const utcStr = selectedDayData.journal.updated_at;
+                                if (!utcStr) return "Unknown";
+                                const date = new Date(utcStr + (utcStr.endsWith("Z") ? "" : "Z"));
+                                return new Intl.DateTimeFormat('en-US', {
+                                  timeZone: 'Asia/Kolkata',
+                                  hour: 'numeric',
+                                  minute: 'numeric',
+                                  hour12: true
+                                }).format(date) + " IST";
+                              })()}
+                            </span>
+                          </DialogSubtitle>
+                          <DialogDescription className="text-lg text-white/90 leading-relaxed whitespace-pre-wrap bg-white/5 p-6 rounded-2xl border border-white/5">
+                            {selectedDayData.journal.content}
+                          </DialogDescription>
+                        </div>
+                        <DialogClose />
+                      </DialogContent>
+                    </DialogContainer>
+                  </Dialog>
+                ) : (
+                  <p className="text-sm text-muted-foreground/80 italic bg-white/5 p-5 rounded-2xl border border-white/5">No journal entry for this day</p>
+                )}
               </div>
 
               {/* Habits */}
@@ -238,37 +314,39 @@ export default function History() {
                     {habits.map((habit) => {
                       const done = selectedDayData?.completedHabitIds.includes(habit.id) ?? false
                       return (
-                        <div key={habit.id} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
-                          {done ? (
-                            <CheckCircle2 className="w-5 h-5 text-violet-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)] flex-shrink-0" />
-                          ) : (
-                            <Circle className="w-5 h-5 text-white/20 flex-shrink-0" />
-                          )}
-                          <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: habit.color, boxShadow: `0 0 8px ${habit.color}80` }} />
-                          <span className={cn("text-base font-semibold", done ? "text-foreground" : "text-muted-foreground")}>
-                            {habit.name}
-                          </span>
-                        </div>
+                        <Dialog key={habit.id}>
+                          <DialogTrigger className="w-full">
+                            <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5 hover:bg-white/10 transition-colors w-full cursor-pointer">
+                              {done ? (
+                                <CheckCircle2 className="w-5 h-5 text-violet-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)] flex-shrink-0" />
+                              ) : (
+                                <Circle className="w-5 h-5 text-white/20 flex-shrink-0" />
+                              )}
+                              <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: habit.color, boxShadow: `0 0 8px ${habit.color}80` }} />
+                              <span className={cn("text-base font-semibold", done ? "text-foreground" : "text-muted-foreground")}>
+                                {habit.name}
+                              </span>
+                            </div>
+                          </DialogTrigger>
+                          <DialogContainer>
+                            <DialogContent className="pointer-events-auto relative flex h-auto w-full max-w-[400px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/90 shadow-2xl backdrop-blur-2xl">
+                              <div className="p-8">
+                                <DialogTitle className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                                  <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: habit.color, boxShadow: `0 0 8px ${habit.color}80` }} />
+                                  {habit.name}
+                                </DialogTitle>
+                                <DialogSubtitle className="text-muted-foreground mb-6 font-medium">Habit Details</DialogSubtitle>
+                                <DialogDescription className="text-base text-white/90 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/5">
+                                  {done ? "You completed this habit on this day! Keep up the good work." : "You missed this habit on this day. Don't give up and try again tomorrow!"}
+                                </DialogDescription>
+                              </div>
+                              <DialogClose />
+                            </DialogContent>
+                          </DialogContainer>
+                        </Dialog>
                       )
                     })}
                   </div>
-                )}
-              </div>
-
-              {/* Journal */}
-              <div className="flex-1 relative z-10">
-                <div className="flex items-center gap-2 mb-4">
-                  <BookOpen className="w-4 h-4 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]" />
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Journal</p>
-                </div>
-                {selectedDayData?.journal ? (
-                  <div className="bg-white/5 p-5 rounded-2xl border border-white/5 backdrop-blur-sm">
-                    <p className="text-base text-foreground/90 leading-relaxed font-medium">
-                      {selectedDayData.journal}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground/80 italic bg-white/5 p-5 rounded-2xl border border-white/5">No journal entry for this day</p>
                 )}
               </div>
             </>
