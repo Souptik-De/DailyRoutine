@@ -120,12 +120,11 @@ export default function Journal() {
 
       {/* Editor */}
       <div className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-pink-500/30 to-violet-500/30 rounded-[2rem] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700 pointer-events-none" />
         <Textarea
           value={content}
           onChange={(e) => { setContent(e.target.value); setSaved(false) }}
           placeholder="What's on your mind today? Reflect on your goals, feelings, and experiences..."
-          className="min-h-[500px] text-lg leading-relaxed p-8 rounded-3xl border-white/10 bg-black/40 resize-none focus-visible:ring-1 focus-visible:ring-pink-500/50 shadow-[0_8px_40px_rgba(0,0,0,0.3)] backdrop-blur-3xl transition-all duration-300 relative z-10 placeholder:text-muted-foreground/30 font-medium"
+          className="min-h-[500px] text-lg leading-relaxed p-8 rounded-3xl border-white/10 bg-black/40 resize-none focus-visible:ring-1 focus-visible:ring-pink-500/50 shadow-[0_8px_40px_rgba(0,0,0,0.3)] focus-visible:shadow-[0_0_40px_rgba(236,72,153,0.3)] backdrop-blur-3xl transition-all duration-300 relative z-10 placeholder:text-muted-foreground/30 font-medium"
         />
       </div>
 
