@@ -11,6 +11,7 @@ interface Habit {
   name: string
   description: string
   color: string
+  is_active?: boolean
 }
 
 interface Streak {
@@ -34,8 +35,11 @@ export default function Dashboard() {
         completionsApi.getForDate(today),
       ])
       const habitsData: Habit[] = habitsRes.data
-      setHabits(habitsData)
-      setCompleted(new Set(completionsRes.data.completed_habit_ids))
+      const activeHabits = habitsData.filter(h => h.is_active !== false)
+      setHabits(activeHabits)
+      const activeHabitIds = new Set(activeHabits.map(h => h.id))
+      const validCompleted = completionsRes.data.completed_habit_ids.filter((id: string) => activeHabitIds.has(id))
+      setCompleted(new Set(validCompleted))
 
       // Load streaks in parallel
       const streakResults = await Promise.all(
@@ -95,7 +99,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div className="animate-fade-in-up">
-        <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest text-violet-400/80 mb-1">Today</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-violet-400/80 mb-1">Today</p>
         <h1 className="text-4xl font-extrabold text-foreground tracking-tight">{todayDisplay}</h1>
       </div>
 

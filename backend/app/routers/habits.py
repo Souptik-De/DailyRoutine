@@ -32,6 +32,7 @@ async def create_habit(habit: Habit):
         "name": habit.name,
         "description": habit.description,
         "color": habit.color,
+        "is_active": habit.is_active,
         "created_at": now,
         "updated_at": now,
     }
@@ -58,12 +59,16 @@ async def update_habit(habit_id: str, update: HabitUpdate):
 
 @router.delete("/{habit_id}", status_code=204)
 async def delete_habit(habit_id: str):
-    """Delete a habit."""
+    """Delete a habit (soft)."""
     doc_ref = habits_collection().document(habit_id)
     doc = doc_ref.get()
     if not doc.exists:
         raise HTTPException(status_code=404, detail="Habit not found")
-    doc_ref.delete()
+    
+    doc_ref.update({
+        "is_active": False,
+        "updated_at": datetime.utcnow().isoformat()
+    })
     return None
 
 

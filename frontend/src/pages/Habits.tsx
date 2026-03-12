@@ -26,6 +26,7 @@ interface Habit {
   name: string
   description: string
   color: string
+  is_active?: boolean
 }
 
 interface HabitWithStreak extends Habit {
@@ -129,7 +130,8 @@ export default function Habits() {
           return { ...h, ...streakRes.data }
         })
       )
-      setHabits(withStreaks)
+      const activeHabits = withStreaks.filter(h => h.is_active !== false)
+      setHabits(activeHabits)
     } catch (err) {
       console.error("Failed to load habits", err)
     } finally {
