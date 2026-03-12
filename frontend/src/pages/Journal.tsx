@@ -3,6 +3,17 @@ import { format } from "date-fns"
 import { journalsApi } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Save, Trash2, BookOpen, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -64,7 +75,6 @@ export default function Journal() {
 
   const handleDelete = async () => {
     if (!entry) return
-    if (!confirm("Delete today's journal entry?")) return
     try {
       await journalsApi.delete(entry.id)
       setEntry(null)
@@ -98,12 +108,25 @@ export default function Journal() {
           <p className="text-muted-foreground text-sm font-medium tracking-wide ml-[60px]">{todayDisplay}</p>
         </div>
         {entry && (
-          <button
-            onClick={handleDelete}
-            className="p-3 rounded-xl hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors group"
-          >
-            <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button className="p-3 rounded-xl hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors group">
+                <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="glass border-white/10 sm:rounded-2xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Journal Entry</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete today's journal entry? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="bg-transparent border-white/10 hover:bg-white/10 cursor-pointer">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600 text-white cursor-pointer">Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
 

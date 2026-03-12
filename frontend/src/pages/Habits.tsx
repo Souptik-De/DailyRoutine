@@ -7,6 +7,17 @@ import { Label } from "@/components/ui/label"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Plus, Pencil, Trash2, Flame, Trophy, Dumbbell } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -103,7 +114,6 @@ export default function Habits() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this habit? This cannot be undone.")) return
     try {
       await habitsApi.delete(id)
       await loadHabits()
@@ -228,9 +238,25 @@ export default function Habits() {
                       <HabitForm onSubmit={handleUpdate} submitLabel="Save Changes" />
                     </DialogContent>
                   </Dialog>
-                  <button onClick={() => handleDelete(habit.id)} className="p-2 rounded-lg hover:bg-red-500/20 text-muted-foreground hover:text-red-400 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button className="p-2 rounded-lg hover:bg-red-500/20 text-muted-foreground hover:text-red-400 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="glass border-white/10 sm:rounded-2xl">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Habit</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this habit? This cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-transparent border-white/10 hover:bg-white/10 cursor-pointer">Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(habit.id)} className="bg-red-500 hover:bg-red-600 text-white cursor-pointer">Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
 

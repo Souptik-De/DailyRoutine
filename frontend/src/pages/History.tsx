@@ -1,8 +1,15 @@
 import { useEffect, useState, useCallback } from "react"
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, subMonths, addMonths, parseISO } from "date-fns"
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, subMonths, addMonths, parseISO, setMonth, setYear } from "date-fns"
 import { habitsApi, completionsApi, journalsApi } from "@/lib/api"
 import { ChevronLeft, ChevronRight, CheckCircle2, BookOpen, Circle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 interface Habit {
@@ -94,9 +101,38 @@ export default function History() {
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <h2 className="text-base font-semibold text-foreground">
-              {format(currentMonth, "MMMM yyyy")}
-            </h2>
+            
+            <div className="flex items-center gap-2">
+              <Select value={currentMonth.getMonth().toString()} onValueChange={(v) => setCurrentMonth(setMonth(currentMonth, parseInt(v)))}>
+                <SelectTrigger className="w-[130px] bg-white/5 border-white/10 glass cursor-pointer font-semibold">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="glass border-white/10 max-h-[300px]">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <SelectItem key={i} value={i.toString()} className="cursor-pointer">
+                      {format(setMonth(new Date(), i), "MMMM")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select value={currentMonth.getFullYear().toString()} onValueChange={(v) => setCurrentMonth(setYear(currentMonth, parseInt(v)))}>
+                <SelectTrigger className="w-[100px] bg-white/5 border-white/10 glass cursor-pointer font-semibold">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="glass border-white/10 max-h-[300px]">
+                  {Array.from({ length: 27 }).map((_, i) => {
+                    const year = 2000 + i
+                    return (
+                      <SelectItem key={year} value={year.toString()} className="cursor-pointer">
+                        {year}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button
               variant="ghost"
               size="icon"
