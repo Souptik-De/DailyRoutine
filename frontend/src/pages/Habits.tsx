@@ -44,6 +44,71 @@ const COLORS = [
   { value: "#ef4444", label: "Red" },
 ]
 
+interface HabitFormProps {
+  formName: string;
+  setFormName: (val: string) => void;
+  formDesc: string;
+  setFormDesc: (val: string) => void;
+  formColor: string;
+  setFormColor: (val: string) => void;
+  onSubmit: () => void;
+  submitLabel: string;
+  resetForm: () => void;
+}
+
+const HabitForm = ({
+  formName, setFormName,
+  formDesc, setFormDesc,
+  formColor, setFormColor,
+  onSubmit, submitLabel,
+  resetForm
+}: HabitFormProps) => (
+  <div className="space-y-4">
+    <div className="space-y-1.5">
+      <Label>Habit Name</Label>
+      <Input placeholder="e.g. Read 20 pages" value={formName} onChange={(e) => setFormName(e.target.value)} />
+    </div>
+    <div className="space-y-1.5">
+      <Label>Description <span className="text-muted-foreground">(optional)</span></Label>
+      <Textarea
+        placeholder="What does this habit involve?"
+        value={formDesc}
+        onChange={(e) => setFormDesc(e.target.value)}
+        className="h-20"
+      />
+    </div>
+    <div className="space-y-2">
+      <Label>Color</Label>
+      <div className="flex gap-2 flex-wrap">
+        {COLORS.map((c) => (
+          <button
+            key={c.value}
+            type="button"
+            className={cn(
+              "w-7 h-7 rounded-full transition-transform duration-150 hover:scale-110",
+              formColor === c.value && "ring-2 ring-white ring-offset-2 ring-offset-background scale-110"
+            )}
+            style={{ backgroundColor: c.value }}
+            onClick={() => setFormColor(c.value)}
+          />
+        ))}
+      </div>
+    </div>
+    <div className="flex justify-end gap-2 pt-2">
+      <DialogClose asChild>
+        <Button variant="ghost" size="sm" onClick={resetForm}>Cancel</Button>
+      </DialogClose>
+      <Button
+        size="sm"
+        onClick={onSubmit}
+        className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white border-0"
+      >
+        {submitLabel}
+      </Button>
+    </div>
+  </div>
+)
+
 export default function Habits() {
   const [habits, setHabits] = useState<HabitWithStreak[]>([])
   const [loading, setLoading] = useState(true)
@@ -122,53 +187,6 @@ export default function Habits() {
     }
   }
 
-  const HabitForm = ({ onSubmit, submitLabel }: { onSubmit: () => void; submitLabel: string }) => (
-    <div className="space-y-4">
-      <div className="space-y-1.5">
-        <Label>Habit Name</Label>
-        <Input placeholder="e.g. Read 20 pages" value={formName} onChange={(e) => setFormName(e.target.value)} />
-      </div>
-      <div className="space-y-1.5">
-        <Label>Description <span className="text-muted-foreground">(optional)</span></Label>
-        <Textarea
-          placeholder="What does this habit involve?"
-          value={formDesc}
-          onChange={(e) => setFormDesc(e.target.value)}
-          className="h-20"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Color</Label>
-        <div className="flex gap-2 flex-wrap">
-          {COLORS.map((c) => (
-            <button
-              key={c.value}
-              type="button"
-              className={cn(
-                "w-7 h-7 rounded-full transition-transform duration-150 hover:scale-110",
-                formColor === c.value && "ring-2 ring-white ring-offset-2 ring-offset-background scale-110"
-              )}
-              style={{ backgroundColor: c.value }}
-              onClick={() => setFormColor(c.value)}
-            />
-          ))}
-        </div>
-      </div>
-      <div className="flex justify-end gap-2 pt-2">
-        <DialogClose asChild>
-          <Button variant="ghost" size="sm" onClick={resetForm}>Cancel</Button>
-        </DialogClose>
-        <Button
-          size="sm"
-          onClick={onSubmit}
-          className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white border-0"
-        >
-          {submitLabel}
-        </Button>
-      </div>
-    </div>
-  )
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -193,7 +211,17 @@ export default function Habits() {
           </DialogTrigger>
           <DialogContent className="glass border-white/10 sm:rounded-2xl">
             <DialogHeader><DialogTitle className="text-xl font-bold">Create New Habit</DialogTitle></DialogHeader>
-            <HabitForm onSubmit={handleCreate} submitLabel="Create Habit" />
+            <HabitForm
+              formName={formName}
+              setFormName={setFormName}
+              formDesc={formDesc}
+              setFormDesc={setFormDesc}
+              formColor={formColor}
+              setFormColor={setFormColor}
+              resetForm={resetForm}
+              onSubmit={handleCreate}
+              submitLabel="Create Habit"
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -235,7 +263,17 @@ export default function Habits() {
                     </DialogTrigger>
                     <DialogContent className="glass border-white/10 sm:rounded-2xl">
                       <DialogHeader><DialogTitle className="text-xl font-bold">Edit Habit</DialogTitle></DialogHeader>
-                      <HabitForm onSubmit={handleUpdate} submitLabel="Save Changes" />
+                      <HabitForm
+                        formName={formName}
+                        setFormName={setFormName}
+                        formDesc={formDesc}
+                        setFormDesc={setFormDesc}
+                        formColor={formColor}
+                        setFormColor={setFormColor}
+                        resetForm={resetForm}
+                        onSubmit={handleUpdate}
+                        submitLabel="Save Changes"
+                      />
                     </DialogContent>
                   </Dialog>
                   <AlertDialog>
