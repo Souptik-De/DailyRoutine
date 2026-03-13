@@ -17,6 +17,8 @@ class Habit(BaseModel):
     description: Optional[str] = ""
     color: Optional[str] = "#6366f1"  # indigo default
     is_active: Optional[bool] = True
+    requires_proof: Optional[bool] = False
+    proof_hint: Optional[str] = ""
 
 
 class HabitUpdate(BaseModel):
@@ -24,3 +26,6 @@ class HabitUpdate(BaseModel):
     description: Optional[str] = None
     color: Optional[str] = None
     is_active: Optional[bool] = None
+    requires_proof: Optional[bool] = None
+    proof_hint: Optional[str] = None
+

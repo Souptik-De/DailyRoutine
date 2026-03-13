@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { habitsApi } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import {
@@ -27,6 +28,8 @@ interface Habit {
   description: string
   color: string
   is_active?: boolean
+  requires_proof?: boolean
+  proof_hint?: string
 }
 
 interface HabitWithStreak extends Habit {
@@ -52,6 +55,10 @@ interface HabitFormProps {
   setFormDesc: (val: string) => void;
   formColor: string;
   setFormColor: (val: string) => void;
+  formRequiresProof: boolean;
+  setFormRequiresProof: (val: boolean) => void;
+  formProofHint: string;
+  setFormProofHint: (val: string) => void;
   onSubmit: () => void;
   submitLabel: string;
   resetForm: () => void;
@@ -61,6 +68,8 @@ const HabitForm = ({
   formName, setFormName,
   formDesc, setFormDesc,
   formColor, setFormColor,
+  formRequiresProof, setFormRequiresProof,
+  formProofHint, setFormProofHint,
   onSubmit, submitLabel,
   resetForm
 }: HabitFormProps) => (
@@ -78,7 +87,30 @@ const HabitForm = ({
         className="h-20"
       />
     </div>
-    <div className="space-y-2">
+    <div className="flex items-center space-x-2 mt-4">
+      <Checkbox 
+        id="proofToggle" 
+        checked={formRequiresProof} 
+        onCheckedChange={(checked) => setFormRequiresProof(checked === true)} 
+        className="border-white/20 data-[state=checked]:bg-amber-500 data-[state=checked]:text-black"
+      />
+      <Label htmlFor="proofToggle" className="text-sm font-medium leading-none cursor-pointer">
+        Require AI Photo Proof
+      </Label>
+    </div>
+    {formRequiresProof && (
+      <div className="space-y-1.5 mt-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+        <Label className="text-amber-500">Proof Requirements</Label>
+        <Input 
+          placeholder="e.g. A photo of the gym equipment" 
+          value={formProofHint} 
+          onChange={(e) => setFormProofHint(e.target.value)} 
+          className="bg-black/20 border-amber-500/30 text-amber-100 placeholder:text-amber-500/40"
+        />
+        <p className="text-[10px] text-amber-500/60 font-medium">The AI will use this hint to verify user submissions.</p>
+      </div>
+    )}
+    <div className="space-y-2 mt-4">
       <Label>Color</Label>
       <div className="flex gap-2 flex-wrap">
         {COLORS.map((c) => (
@@ -119,6 +151,8 @@ export default function Habits() {
   const [formName, setFormName] = useState("")
   const [formDesc, setFormDesc] = useState("")
   const [formColor, setFormColor] = useState("#6366f1")
+  const [formRequiresProof, setFormRequiresProof] = useState(false)
+  const [formProofHint, setFormProofHint] = useState("")
 
   const loadHabits = async () => {
     try {
@@ -147,6 +181,8 @@ export default function Habits() {
     setFormName("")
     setFormDesc("")
     setFormColor("#6366f1")
+    setFormRequiresProof(false)
+    setFormProofHint("")
   }
 
   const openEdit = (habit: HabitWithStreak) => {
@@ -154,12 +190,20 @@ export default function Habits() {
     setFormName(habit.name)
     setFormDesc(habit.description)
     setFormColor(habit.color)
+    setFormRequiresProof(habit.requires_proof || false)
+    setFormProofHint(habit.proof_hint || "")
   }
 
   const handleCreate = async () => {
     if (!formName.trim()) return
     try {
-      await habitsApi.create({ name: formName.trim(), description: formDesc.trim(), color: formColor })
+      await habitsApi.create({ 
+        name: formName.trim(), 
+        description: formDesc.trim(), 
+        color: formColor,
+        requires_proof: formRequiresProof,
+        proof_hint: formRequiresProof ? formProofHint.trim() : ""
+      })
       setIsCreateOpen(false)
       resetForm()
       await loadHabits()
@@ -171,7 +215,13 @@ export default function Habits() {
   const handleUpdate = async () => {
     if (!editingHabit || !formName.trim()) return
     try {
-      await habitsApi.update(editingHabit.id, { name: formName.trim(), description: formDesc.trim(), color: formColor })
+      await habitsApi.update(editingHabit.id, { 
+        name: formName.trim(), 
+        description: formDesc.trim(), 
+        color: formColor,
+        requires_proof: formRequiresProof,
+        proof_hint: formRequiresProof ? formProofHint.trim() : ""
+      })
       setEditingHabit(null)
       resetForm()
       await loadHabits()
@@ -220,6 +270,10 @@ export default function Habits() {
               setFormDesc={setFormDesc}
               formColor={formColor}
               setFormColor={setFormColor}
+              formRequiresProof={formRequiresProof}
+              setFormRequiresProof={setFormRequiresProof}
+              formProofHint={formProofHint}
+              setFormProofHint={setFormProofHint}
               resetForm={resetForm}
               onSubmit={handleCreate}
               submitLabel="Create Habit"
@@ -271,6 +325,10 @@ export default function Habits() {
                         setFormDesc={setFormDesc}
                         formColor={formColor}
                         setFormColor={setFormColor}
+                        formRequiresProof={formRequiresProof}
+                        setFormRequiresProof={setFormRequiresProof}
+                        formProofHint={formProofHint}
+                        setFormProofHint={setFormProofHint}
                         resetForm={resetForm}
                         onSubmit={handleUpdate}
                         submitLabel="Save Changes"

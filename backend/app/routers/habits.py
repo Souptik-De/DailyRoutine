@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from typing import Optional
 from datetime import datetime
 from app.config import get_db, DEMO_USER_ID
 from app.models import Habit, HabitUpdate
@@ -40,6 +41,8 @@ async def create_habit(habit: Habit):
         "description": habit.description,
         "color": habit.color,
         "is_active": habit.is_active,
+        "requires_proof": habit.requires_proof,
+        "proof_hint": habit.proof_hint,
         "created_at": now,
         "updated_at": now,
     }
@@ -106,6 +109,42 @@ async def delete_habit(habit_id: str):
         cache.set_cache("habits", cached)
 
     return None
+
+
+from pydantic import BaseModel
+
+class ProofSettingsUpdate(BaseModel):
+    requiresProof: bool
+    proofHint: Optional[str] = None
+
+@router.patch("/{habit_id}/proof-settings")
+async def update_proof_settings(habit_id: str, update: ProofSettingsUpdate):
+    """Update proof requirements for a habit."""
+    doc_ref = habits_collection().document(habit_id)
+    doc = doc_ref.get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Habit not found")
+
+    now = datetime.utcnow().isoformat()
+    update_data = {
+        "requires_proof": update.requiresProof,
+        "proof_hint": update.proofHint if update.proofHint else "",
+        "updated_at": now
+    }
+    doc_ref.update(update_data)
+
+    # Update cache
+    cached = cache.get_cache("habits")
+    if cached is not None:
+        for h in cached:
+            if h.get("id") == habit_id:
+                h.update(update_data)
+                break
+        cache.set_cache("habits", cached)
+
+    return {"id": habit_id, **update_data}
+
+
 
 
 @router.get("/{habit_id}/streak")

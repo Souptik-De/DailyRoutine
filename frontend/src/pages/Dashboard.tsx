@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { BookOpen, Flame, Trophy, TrendingUp, CheckCircle2, Circle, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link } from "react-router-dom"
+import HabitCheckIn from "@/components/HabitCheckIn"
 
 interface Habit {
   id: string
@@ -12,6 +13,8 @@ interface Habit {
   description: string
   color: string
   is_active?: boolean
+  requires_proof?: boolean
+  proof_hint?: string
 }
 
 interface Streak {
@@ -27,6 +30,8 @@ export default function Dashboard() {
   const [streaks, setStreaks] = useState<Record<string, Streak>>({})
   const [completed, setCompleted] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+
+  const [checkInHabit, setCheckInHabit] = useState<Habit | null>(null)
 
   const loadData = useCallback(async () => {
     try {
@@ -61,27 +66,61 @@ export default function Dashboard() {
     loadData()
   }, [loadData])
 
-  const toggleHabit = async (habitId: string, isCompleted: boolean) => {
-    try {
-      if (isCompleted) {
-        await completionsApi.markIncomplete(today, habitId)
+  // Handles completion logic dynamically for legacy vs proof-required
+  const onHabitClicked = async (habit: Habit, isCompleted: boolean) => {
+    if (isCompleted) {
+      // Uncheck instantly (no proof required to undo)
+      try {
+        await completionsApi.markIncomplete(today, habit.id)
         setCompleted((prev) => {
           const next = new Set(prev)
-          next.delete(habitId)
+          next.delete(habit.id)
           return next
         })
-      } else {
-        await completionsApi.markComplete(today, habitId)
-        setCompleted((prev) => new Set([...prev, habitId]))
+        const streakRes = await habitsApi.getStreak(habit.id)
+        setStreaks((prev) => ({
+          ...prev,
+          [habit.id]: { current_streak: streakRes.data.current_streak, longest_streak: streakRes.data.longest_streak },
+        }))
+      } catch (err) {
+        console.error("Failed to unmark habit", err)
       }
-      // Refresh streaks for this habit
+    } else {
+      // Checking
+      if (habit.requires_proof) {
+        setCheckInHabit(habit)
+      } else {
+        await executeLegacyCheckin(habit.id)
+      }
+    }
+  }
+
+  const executeLegacyCheckin = async (habitId: string) => {
+    try {
+      await completionsApi.markComplete(today, habitId)
+      setCompleted((prev) => new Set([...prev, habitId]))
       const streakRes = await habitsApi.getStreak(habitId)
       setStreaks((prev) => ({
         ...prev,
         [habitId]: { current_streak: streakRes.data.current_streak, longest_streak: streakRes.data.longest_streak },
       }))
     } catch (err) {
-      console.error("Failed to toggle habit", err)
+      console.error("Failed to mark habit", err)
+    }
+  }
+
+  const handleProofStreakUpdate = (habitId: string) => async (newStreak: number) => {
+    // If Proof check-in succeeded, add to completed list and update streaks locally
+    setCompleted((prev) => new Set([...prev, habitId]))
+    try {
+      // Refetch streaks to be safe, or just use the new streak provided
+      const streakRes = await habitsApi.getStreak(habitId)
+      setStreaks((prev) => ({
+        ...prev,
+        [habitId]: { current_streak: streakRes.data.current_streak, longest_streak: streakRes.data.longest_streak },
+      }))
+    } catch (err) {
+      console.error("Failed to refresh streak after proof", err)
     }
   }
 
@@ -96,7 +135,18 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
+      {/* Proof of Work Checkin Overlay */}
+      {checkInHabit && (
+        <HabitCheckIn
+          habit={checkInHabit}
+          userId="demo_user_123"
+          onStreakUpdate={handleProofStreakUpdate(checkInHabit.id)}
+          onClose={() => setCheckInHabit(null)}
+          onLegacyCheckin={() => executeLegacyCheckin(checkInHabit.id)}
+        />
+      )}
+
       {/* Header */}
       <div className="animate-fade-in-up">
         <p className="text-xs font-bold uppercase tracking-widest text-brand-400/80 mb-1">Today</p>
@@ -168,12 +218,12 @@ export default function Dashboard() {
                     : "hover:translate-x-1"
                 )}
                 style={{ animationDelay: `${250 + i * 50}ms` }}
-                onClick={() => toggleHabit(habit.id, isCompleted)}
+                onClick={() => onHabitClicked(habit, isCompleted)}
               >
                 <div className="relative">
                   <Checkbox
                     checked={isCompleted}
-                    onCheckedChange={() => toggleHabit(habit.id, isCompleted)}
+                    onCheckedChange={() => onHabitClicked(habit, isCompleted)}
                     onClick={(e) => e.stopPropagation()}
                     className={cn("w-6 h-6 rounded-full border-2 transition-all duration-300", isCompleted && "border-brand-400 bg-brand-500 text-white shadow-inner")}
                   />
@@ -183,9 +233,16 @@ export default function Dashboard() {
                   style={{ backgroundColor: habit.color, boxShadow: `0 0 10px ${habit.color}50` }}
                 />
                 <div className="flex-1 min-w-0 py-1">
-                  <p className={cn("text-lg font-semibold transition-all duration-300", isCompleted ? "text-muted-foreground line-through" : "text-foreground group-hover:text-brand-200")}>
-                    {habit.name}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className={cn("text-lg font-semibold transition-all duration-300", isCompleted ? "text-muted-foreground line-through" : "text-foreground group-hover:text-brand-200")}>
+                      {habit.name}
+                    </p>
+                    {habit.requires_proof && !isCompleted && (
+                       <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 ring-1 ring-amber-500/20 shadow-inner">
+                         Proof Req.
+                       </span>
+                    )}
+                  </div>
                   {habit.description && (
                     <p className="text-xs text-muted-foreground/80 truncate mt-0.5">{habit.description}</p>
                   )}

@@ -21,9 +21,9 @@ export const journalsApi = {
 // ─── Habits ───────────────────────────────────────────────────────────────────
 export const habitsApi = {
   list: () => api.get("/api/habits"),
-  create: (data: { name: string; description?: string; color?: string }) =>
+  create: (data: { name: string; description?: string; color?: string; requires_proof?: boolean; proof_hint?: string }) =>
     api.post("/api/habits", data),
-  update: (id: string, data: { name?: string; description?: string; color?: string }) =>
+  update: (id: string, data: { name?: string; description?: string; color?: string; requires_proof?: boolean; proof_hint?: string }) =>
     api.put(`/api/habits/${id}`, data),
   delete: (id: string) => api.delete(`/api/habits/${id}`),
   getStreak: (id: string) => api.get(`/api/habits/${id}/streak`),
@@ -50,4 +50,12 @@ export const notificationsApi = {
   getUnseen: () => api.get("/api/notifications/unseen"),
   markSeen: (id: string) => api.post(`/api/notifications/${id}/seen`),
   testTrigger: () => api.post("/api/notifications/test-trigger"),
+};
+
+// ─── Proof of Work Checkin ────────────────────────────────────────────────────
+export const checkinApi = {
+  submitProof: (userId: string, habitId: string, imageUrl?: string) => 
+    api.post("/api/habits/checkin", { userId, habitId, imageUrl }),
+  updateProofSettings: (habitId: string, data: { requiresProof: boolean; proofHint: string }) =>
+    api.patch(`/api/habits/${habitId}/proof-settings`, data),
 };
