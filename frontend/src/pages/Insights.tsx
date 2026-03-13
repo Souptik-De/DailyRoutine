@@ -348,18 +348,20 @@ export default function Insights() {
                       : undefined,
                   }}
                 />
+                {/* Date pinned top-left */}
                 <span
-                  className="text-sm font-bold relative z-10 leading-none"
+                  className="absolute top-2 left-3 text-sm font-bold leading-none z-10"
                   style={{ color: score !== null ? moodColor(score) : "rgba(255,255,255,0.25)" }}
                 >
                   {format(date, "d")}
                 </span>
+                {/* Big emoji centered */}
                 {sentiment ? (
-                  <span className="text-xl relative z-10 mt-1 leading-none drop-shadow-sm">
+                  <span className="text-4xl relative z-10 leading-none drop-shadow-sm">
                     {SENTIMENT_EMOJIS[sentiment] ?? "😐"}
                   </span>
                 ) : (
-                  <span className="text-lg relative z-10 mt-1 leading-none opacity-15">
+                  <span className="text-3xl relative z-10 leading-none opacity-10 select-none">
                     —
                   </span>
                 )}
