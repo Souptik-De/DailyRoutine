@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncio
 import logging
-from app.routers import journals, habits, completions, insights, notifications
+from app.routers import journals, habits, completions, insights, notifications, doodle
 from app.services.accountability import run_accountability_check
 
 logger = logging.getLogger(__name__)
@@ -59,6 +59,7 @@ app.include_router(habits.router)
 app.include_router(completions.router)
 app.include_router(insights.router)
 app.include_router(notifications.router)
+app.include_router(doodle.router)
 
 
 @app.get("/")

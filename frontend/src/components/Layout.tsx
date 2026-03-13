@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom"
 import { LayoutDashboard, Dumbbell, BookOpen, CalendarDays, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
+import DoodleOverlay from "./DoodleOverlay"
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -83,6 +84,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
+      <DoodleOverlay />
     </div>
   )
 }
