@@ -7,6 +7,7 @@ const navItems = [
   { href: "/habits", label: "Habits", icon: Dumbbell },
   { href: "/journal", label: "Journal", icon: BookOpen },
   { href: "/history", label: "History", icon: CalendarDays },
+  { href: "/insights", label: "Insights", icon: Sparkles },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {

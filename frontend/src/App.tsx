@@ -4,6 +4,7 @@ import Dashboard from "@/pages/Dashboard"
 import Habits from "@/pages/Habits"
 import Journal from "@/pages/Journal"
 import History from "@/pages/History"
+import Insights from "@/pages/Insights"
 import "./index.css"
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <Route path="/habits" element={<Habits />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/history" element={<History />} />
+          <Route path="/insights" element={<Insights />} />
         </Routes>
       </Layout>
     </BrowserRouter>

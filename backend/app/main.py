@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import journals, habits, completions
+from app.routers import journals, habits, completions, insights
 
 app = FastAPI(
     title="DailyRoutine API",
@@ -24,6 +24,7 @@ app.add_middleware(
 app.include_router(journals.router)
 app.include_router(habits.router)
 app.include_router(completions.router)
+app.include_router(insights.router)
 
 
 @app.get("/")

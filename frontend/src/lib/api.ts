@@ -39,3 +39,8 @@ export const completionsApi = {
   markIncomplete: (date: string, habitId: string) =>
     api.delete(`/api/completions/${date}/${habitId}`),
 };
+
+// ─── Insights ─────────────────────────────────────────────────────────────────
+export const insightsApi = {
+  get: (days: number = 14) => api.get("/api/insights", { params: { days } }),
+};

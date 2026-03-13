@@ -1,15 +1,43 @@
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
+import asyncio
+import logging
 from google.cloud.firestore_v1 import SERVER_TIMESTAMP
 from app.config import get_db, DEMO_USER_ID
 from app.models import JournalEntry, JournalEntryUpdate
 import app.services.cache as cache
+from app.services.gemini import analyse_entry, AnalysisError
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/journals", tags=["journals"])
 
 
 def journals_collection():
     return get_db().collection("users").document(DEMO_USER_ID).collection("journals")
+
+
+def analysis_collection():
+    return get_db().collection("users").document(DEMO_USER_ID).collection("journal_analysis")
+
+
+async def _run_analysis(entry_id: str, date: str, content: str):
+    """Fire-and-forget: analyse journal content and store the result."""
+    try:
+        result = await asyncio.to_thread(analyse_entry, content)
+        analysis_collection().document(date).set({
+            "entry_id": entry_id,
+            "date": date,
+            "sentiment": result["sentiment"],
+            "mood_score": result["mood_score"],
+            "themes": result["themes"],
+            "analysed_at": datetime.utcnow().isoformat(),
+        })
+        logger.info("Analysis saved for %s", date)
+    except AnalysisError as e:
+        logger.warning("Analysis skipped for %s: %s", date, e)
+    except Exception as e:
+        logger.error("Unexpected analysis error for %s: %s", date, e)
 
 
 @router.get("")
@@ -78,6 +106,9 @@ async def create_journal(entry: JournalEntry):
         cached.sort(key=lambda x: x.get("date", ""), reverse=True)
         cache.set_cache("journals", cached)
 
+    # Fire-and-forget mood analysis
+    asyncio.create_task(_run_analysis(doc_ref.id, entry.date, entry.content))
+
     return {"id": doc_ref.id, **data}
 
 
@@ -104,6 +135,11 @@ async def update_journal(entry_id: str, update: JournalEntryUpdate):
                 entry["updated_at"] = now
                 break
         cache.set_cache("journals", cached)
+
+    # Fire-and-forget mood analysis
+    entry_date = updated.get("date", "")
+    if entry_date:
+        asyncio.create_task(_run_analysis(entry_id, entry_date, update.content))
 
     return updated
 
