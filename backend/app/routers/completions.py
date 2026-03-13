@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from datetime import date, timedelta
 from app.config import get_db, DEMO_USER_ID
 import app.services.cache as cache
@@ -123,7 +123,7 @@ async def mark_complete(date_str: str, habit_id: str):
 
 
 @router.delete("/{date_str}/{habit_id}", status_code=200)
-async def mark_incomplete(date_str: str, habit_id: str):
+async def mark_incomplete(date_str: str, habit_id: str, background_tasks: BackgroundTasks):
     """Unmark a habit completion on a given date."""
     doc_ref = completions_collection().document(date_str)
     doc = doc_ref.get()
@@ -136,6 +136,15 @@ async def mark_incomplete(date_str: str, habit_id: str):
         if date_str in cached and habit_id in cached[date_str]:
             cached[date_str].remove(habit_id)
         cache.update_cache_in_place("completions", cached)
+
+    # Delete the alert log for today so it can fire again! (Helpful for testing/immediate triggers)
+    today = date.today()
+    alert_doc_id = f"{habit_id}_{today.isoformat()}"
+    get_db().collection("users").document(DEMO_USER_ID).collection("streak_alerts").document(alert_doc_id).delete()
+
+    # Trigger accountability agent in the background immediately
+    from app.services.accountability import run_accountability_check
+    background_tasks.add_task(run_accountability_check)
 
     return {"date": date_str, "habit_id": habit_id, "completed": False}
 

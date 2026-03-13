@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from "react"
-import { format } from "date-fns"
+import { format, subDays, addDays } from "date-fns"
 import { habitsApi, completionsApi } from "@/lib/api"
 import { Checkbox } from "@/components/ui/checkbox"
-import { BookOpen, Flame, Trophy, TrendingUp, CheckCircle2, Circle, ArrowRight } from "lucide-react"
+import { BookOpen, Flame, Trophy, TrendingUp, CheckCircle2, ArrowRight, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link } from "react-router-dom"
 
@@ -20,8 +20,10 @@ interface Streak {
 }
 
 export default function Dashboard() {
-  const today = format(new Date(), "yyyy-MM-dd")
-  const todayDisplay = format(new Date(), "EEEE, MMMM d")
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const selectedDateStr = format(selectedDate, "yyyy-MM-dd")
+  const displayDate = format(selectedDate, "EEEE, MMMM d")
+  const isToday = format(new Date(), "yyyy-MM-dd") === selectedDateStr
 
   const [habits, setHabits] = useState<Habit[]>([])
   const [streaks, setStreaks] = useState<Record<string, Streak>>({})
@@ -32,7 +34,7 @@ export default function Dashboard() {
     try {
       const [habitsRes, completionsRes] = await Promise.all([
         habitsApi.list(),
-        completionsApi.getForDate(today),
+        completionsApi.getForDate(selectedDateStr),
       ])
       const habitsData: Habit[] = habitsRes.data
       const activeHabits = habitsData.filter(h => h.is_active !== false)
@@ -55,7 +57,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }, [today])
+  }, [selectedDateStr])
 
   useEffect(() => {
     loadData()
@@ -64,14 +66,14 @@ export default function Dashboard() {
   const toggleHabit = async (habitId: string, isCompleted: boolean) => {
     try {
       if (isCompleted) {
-        await completionsApi.markIncomplete(today, habitId)
+        await completionsApi.markIncomplete(selectedDateStr, habitId)
         setCompleted((prev) => {
           const next = new Set(prev)
           next.delete(habitId)
           return next
         })
       } else {
-        await completionsApi.markComplete(today, habitId)
+        await completionsApi.markComplete(selectedDateStr, habitId)
         setCompleted((prev) => new Set([...prev, habitId]))
       }
       // Refresh streaks for this habit
@@ -82,26 +84,6 @@ export default function Dashboard() {
       }))
     } catch (err) {
       console.error("Failed to toggle habit", err)
-    }
-  }
-
-  const handleBreakStreak = async (habitId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    try {
-      await completionsApi.testBreakStreak(habitId)
-      await loadData() // Refresh UI state
-    } catch (err) {
-      console.error("Test Break Streak failed", err)
-    }
-  }
-
-  const handleRevertStreak = async (habitId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    try {
-      await completionsApi.testRevertStreak(habitId)
-      await loadData() // Refresh UI state
-    } catch (err) {
-      console.error("Test Revert Streak failed", err)
     }
   }
 
@@ -118,9 +100,49 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="animate-fade-in-up">
-        <p className="text-xs font-bold uppercase tracking-widest text-brand-400/80 mb-1">Today</p>
-        <h1 className="text-4xl font-extrabold text-foreground tracking-tight">{todayDisplay}</h1>
+      <div className="flex items-center justify-between animate-fade-in-up">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-brand-400/80 mb-1">
+            {isToday ? "Today" : "Historical View"}
+          </p>
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl font-extrabold text-foreground tracking-tight">{displayDate}</h1>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 mt-6 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+          <button 
+            onClick={() => setSelectedDate(prev => subDays(prev, 1))}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors cursor-pointer text-zinc-400 hover:text-white"
+            title="Previous day"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          
+          <div className="relative group p-2 hover:bg-white/10 rounded-lg transition-colors cursor-pointer" title="Pick date">
+            <CalendarDays className="w-5 h-5 text-zinc-400 group-hover:text-brand-300 transition-colors" />
+            <input 
+              type="date" 
+              value={selectedDateStr}
+              max={format(new Date(), "yyyy-MM-dd")}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setSelectedDate(new Date(e.target.value + "T00:00:00"))
+                }
+              }}
+              className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+            />
+          </div>
+
+          <button 
+            onClick={() => { if (!isToday) setSelectedDate(prev => addDays(prev, 1)) }}
+            disabled={isToday}
+            className={cn("p-2 rounded-lg transition-colors text-zinc-400", isToday ? "opacity-30 cursor-not-allowed" : "hover:bg-white/10 hover:text-white")}
+            title="Next day"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Stats row */}
@@ -171,7 +193,7 @@ export default function Dashboard() {
       <div className="animate-fade-in-up" style={{ animationDelay: "200ms" }}>
         <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
           <div className="w-2 h-6 bg-brand-400 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.4)]" />
-          Today's Routine
+          {isToday ? "Today's Routine" : "Routine on " + format(selectedDate, "MMM d")}
         </h2>
         <div className="space-y-3">
           {habits.map((habit, i) => {
@@ -229,22 +251,6 @@ export default function Dashboard() {
                     )}
                   </div>
                 )}
-                
-                {/* Tech Debt: Demo buttons for Agent A/B triggers */}
-                <div className="flex items-center gap-2 ml-4">
-                  <button 
-                    onClick={(e) => handleBreakStreak(habit.id, e)} 
-                    className="text-xs font-semibold text-red-400 transition-colors bg-red-400/10 hover:bg-red-400/20 px-2.5 py-1.5 rounded-lg border border-red-500/30"
-                  >
-                    Break Streak
-                  </button>
-                  <button 
-                    onClick={(e) => handleRevertStreak(habit.id, e)} 
-                    className="text-xs font-semibold text-zinc-400 transition-colors bg-zinc-400/10 hover:bg-zinc-400/20 px-2.5 py-1.5 rounded-lg border border-zinc-500/30"
-                  >
-                    Revert
-                  </button>
-                </div>
               </div>
             )
           })}

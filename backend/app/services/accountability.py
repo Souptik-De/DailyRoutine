@@ -132,9 +132,18 @@ def audit_broken_streaks() -> list[dict]:
                 streak_count += 1
                 check -= timedelta(days=1)
 
-        # Check if streak is broken (>48h since last completion)
-        if last_completed and last_completed >= cutoff:
-            continue  # Still active, skip
+        # Check if streak is broken (is yesterday complete?)
+        # A streak is active if it was completed either today or yesterday. 
+        # If it wasn't completed yesterday or today, it is broken!
+        yesterday_str = (date.today() - timedelta(days=1)).isoformat()
+        today_iso_str = date.today().isoformat()
+        
+        is_completed_today = habit_id in comp_dict.get(today_iso_str, [])
+        is_completed_yesterday = habit_id in comp_dict.get(yesterday_str, [])
+        
+        if is_completed_today or is_completed_yesterday:
+            continue  # Still active, skip 
+
         if last_completed is None and not comp_dict:
             continue  # No completion data at all
 
