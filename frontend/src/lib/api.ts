@@ -38,6 +38,10 @@ export const completionsApi = {
     api.post(`/api/completions/${date}/${habitId}`),
   markIncomplete: (date: string, habitId: string) =>
     api.delete(`/api/completions/${date}/${habitId}`),
+  testBreakStreak: (habitId: string) =>
+    api.post("/api/completions/test/break-streak", null, { params: { habit_id: habitId } }),
+  testRevertStreak: (habitId: string) =>
+    api.post("/api/completions/test/revert-streak", null, { params: { habit_id: habitId } }),
 };
 
 // ─── Insights ─────────────────────────────────────────────────────────────────

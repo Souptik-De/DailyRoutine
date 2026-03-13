@@ -30,14 +30,21 @@ ENFORCER_SYSTEM_PROMPT = (
     "short notification message (max 3 sentences) that:\n"
     "- Names the exact habit that was missed and how long the streak was\n"
     "- References something SPECIFIC the user wrote in their journal that "
-    "contradicts their inaction (quote or paraphrase it directly)\n"
+    "contradicts their inaction\n"
     "- Ends with a sharp, direct call to action — not a question, a statement\n\n"
     "Tone: like a coach who believes in you but has run out of patience.\n"
     "Do NOT use generic phrases like 'you got this' or 'believe in yourself'.\n"
-    "Do NOT use exclamation marks. Be specific. Be real."
+    "Do NOT use exclamation marks. Be specific. Be real.\n\n"
+    "Crucially: DO NOT explicitly quote the user's journal entry in your message. Just allude to it directly as a fact. "
+    "The UI will display the referenced journal below your message automatically.\n\n"
+    "You MUST output ONLY a valid JSON object with the following structure:\n"
+    "{\n"
+    "  \"message\": \"<the accountability message>\",\n"
+    "  \"referenced_journal_id\": \"<the ID of the journal entry you referenced, or null>\"\n"
+    "}"
 )
 
-GENERIC_FALLBACK = (
+GENERIC_FALLBACK_MSG = (
     "You broke your {habit_name} streak of {streak_count} days. "
     "No journal context to reference — but you know what you committed to. "
     "Get back on it today."
@@ -194,12 +201,13 @@ def _call_groq(user_message: str) -> str:
         try:
             response = _client.chat.completions.create(
                 model=_MODEL,
+                response_format={"type": "json_object"},
                 messages=[
                     {"role": "system", "content": ENFORCER_SYSTEM_PROMPT},
                     {"role": "user", "content": user_message},
                 ],
                 temperature=0.7,
-                max_tokens=300,
+                max_tokens=400,
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
@@ -217,6 +225,7 @@ def generate_accountability_message(payload: dict) -> dict | None:
 
     Returns the notification dict or None on failure.
     """
+    import json
     habit_name = payload["habit_name"]
     habit_id = payload["habit_id"]
     streak_count = payload["streak_count"]
@@ -224,21 +233,22 @@ def generate_accountability_message(payload: dict) -> dict | None:
 
     # Get journal context
     entries, total_count = _get_journal_context(habit_name)
+    entries_by_id = {e["id"]: e for e in entries}
 
     now = datetime.utcnow().isoformat()
 
     # If fewer than 3 journal entries, use generic fallback
     if total_count < 3:
         logger.info("[Enforcer] Too few journal entries (%d), using fallback.", total_count)
-        message = GENERIC_FALLBACK.format(habit_name=habit_name, streak_count=streak_count)
-        notif = _save_notification(habit_id, habit_name, streak_count, message, now)
+        msg_text = GENERIC_FALLBACK_MSG.format(habit_name=habit_name, streak_count=streak_count)
+        notif = _save_notification(habit_id, habit_name, streak_count, msg_text, None, now)
         _save_alert(habit_id, habit_name, notif["id"])
         return notif
 
     # Build the user message
     entries_text = "\n".join(
-        f"{i+1}. [{e.get('date', '?')}] {e.get('content', '')[:300]}"
-        for i, e in enumerate(entries)
+        f"ID: {e.get('id')} | Date: {e.get('date', '?')} | Content: {e.get('content', '')[:300]}"
+        for e in entries
     )
 
     user_message = (
@@ -246,26 +256,50 @@ def generate_accountability_message(payload: dict) -> dict | None:
         f"Streak that was broken: {streak_count} days\n"
         f"Last completed: {last_completed}\n\n"
         f"User's recent journal entries:\n{entries_text}\n\n"
-        f"Write the notification message now."
+        f"Write the notification message now, and provide the exact ID of the journal entry you referenced in the JSON."
     )
 
     try:
-        message = _call_groq(user_message)
+        raw_response = _call_groq(user_message).strip()
+        logger.info(f"Raw response: {raw_response}")
+        if raw_response.startswith("```json"):
+            raw_response = raw_response[7:]
+        elif raw_response.startswith("```"):
+            raw_response = raw_response[3:]
+        if raw_response.endswith("```"):
+            raw_response = raw_response[:-3]
+        
+        parsed = json.loads(raw_response.strip())
+        message_text = parsed.get("message", "")
+        ref_id = parsed.get("referenced_journal_id")
 
         # If too long, ask Groq to shorten
-        if len(message) > 280:
-            logger.info("[Enforcer] Message too long (%d chars), requesting shorter version.", len(message))
+        if len(message_text) > 280:
+            logger.info("[Enforcer] Message too long (%d chars), requesting shorter version.", len(message_text))
             shorten_msg = (
-                f"This message is {len(message)} characters. Shorten it to under 280 characters "
+                f"This message is {len(message_text)} characters. Shorten it to under 280 characters "
                 f"while keeping the same tone, the specific journal reference, and the call to action. "
-                f"Return ONLY the shortened message:\n\n{message}"
+                f"Return ONLY a valid JSON with keys \"message\" and \"referenced_journal_id\".\n\nmessage:\n{message_text}"
             )
             try:
-                message = _call_groq(shorten_msg)
+                short_raw = _call_groq(shorten_msg)
+                short_parsed = json.loads(short_raw)
+                message_text = short_parsed.get("message", message_text[:277] + "...")
+                ref_id = short_parsed.get("referenced_journal_id", ref_id)
             except Exception:
-                message = message[:277] + "..."
+                message_text = message_text[:277] + "..."
 
-        notif = _save_notification(habit_id, habit_name, streak_count, message, now)
+        journal_ref = None
+        if ref_id and ref_id in entries_by_id:
+            e = entries_by_id[ref_id]
+            journal_ref = {
+                "id": e["id"],
+                "date": e.get("date"),
+                "content": e.get("content", ""),
+                "content_snippet": e.get("content", "")[:100] + "..." if len(e.get("content", "")) > 100 else e.get("content", "")
+            }
+
+        notif = _save_notification(habit_id, habit_name, streak_count, message_text, journal_ref, now)
         _save_alert(habit_id, habit_name, notif["id"])
         logger.info("[Enforcer] Notification saved for habit '%s'.", habit_name)
         return notif
@@ -275,7 +309,7 @@ def generate_accountability_message(payload: dict) -> dict | None:
         return None
 
 
-def _save_notification(habit_id: str, habit_name: str, streak_count: int, message: str, now: str) -> dict:
+def _save_notification(habit_id: str, habit_name: str, streak_count: int, message: str, journal_ref: dict | None, now: str) -> dict:
     """Save notification to Firestore."""
     doc_ref = _notifications_col().document()
     data = {
@@ -283,6 +317,7 @@ def _save_notification(habit_id: str, habit_name: str, streak_count: int, messag
         "habit_name": habit_name,
         "streak_count": streak_count,
         "message": message,
+        "journal_reference": journal_ref,
         "delivered_at": now,
         "seen_at": None,
     }

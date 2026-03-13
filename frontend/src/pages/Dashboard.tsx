@@ -85,6 +85,26 @@ export default function Dashboard() {
     }
   }
 
+  const handleBreakStreak = async (habitId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      await completionsApi.testBreakStreak(habitId)
+      await loadData() // Refresh UI state
+    } catch (err) {
+      console.error("Test Break Streak failed", err)
+    }
+  }
+
+  const handleRevertStreak = async (habitId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      await completionsApi.testRevertStreak(habitId)
+      await loadData() // Refresh UI state
+    } catch (err) {
+      console.error("Test Revert Streak failed", err)
+    }
+  }
+
   const completionRate = habits.length > 0 ? Math.round((completed.size / habits.length) * 100) : 0
 
   if (loading) {
@@ -209,6 +229,22 @@ export default function Dashboard() {
                     )}
                   </div>
                 )}
+                
+                {/* Tech Debt: Demo buttons for Agent A/B triggers */}
+                <div className="flex items-center gap-2 ml-4">
+                  <button 
+                    onClick={(e) => handleBreakStreak(habit.id, e)} 
+                    className="text-xs font-semibold text-red-400 transition-colors bg-red-400/10 hover:bg-red-400/20 px-2.5 py-1.5 rounded-lg border border-red-500/30"
+                  >
+                    Break Streak
+                  </button>
+                  <button 
+                    onClick={(e) => handleRevertStreak(habit.id, e)} 
+                    className="text-xs font-semibold text-zinc-400 transition-colors bg-zinc-400/10 hover:bg-zinc-400/20 px-2.5 py-1.5 rounded-lg border border-zinc-500/30"
+                  >
+                    Revert
+                  </button>
+                </div>
               </div>
             )
           })}

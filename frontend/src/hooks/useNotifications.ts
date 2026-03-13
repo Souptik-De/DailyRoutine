@@ -7,6 +7,12 @@ export interface Notification {
   habit_name: string
   streak_count: number
   message: string
+  journal_reference: {
+    id: string
+    date: string
+    content: string
+    content_snippet: string
+  } | null
   delivered_at: string
   seen_at: string | null
 }
