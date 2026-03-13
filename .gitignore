@@ -3,3 +3,4 @@ serviceAccountKey.json
 __pycache__
 *.pyc
 backend/app/__pycache__/main.cpython-313.pyc
+.env
