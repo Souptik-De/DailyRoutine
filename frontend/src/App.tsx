@@ -5,11 +5,15 @@ import Habits from "@/pages/Habits"
 import Journal from "@/pages/Journal"
 import History from "@/pages/History"
 import Insights from "@/pages/Insights"
+import AccountabilityModal from "@/components/AccountabilityModal"
+import { useNotifications } from "@/hooks/useNotifications"
 import "./index.css"
 
-function App() {
+function AppContent() {
+  const { notification, markSeen } = useNotifications()
+
   return (
-    <BrowserRouter>
+    <>
       <Layout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
@@ -19,6 +23,22 @@ function App() {
           <Route path="/insights" element={<Insights />} />
         </Routes>
       </Layout>
+
+      {/* Accountability Coach — full-screen intervention modal */}
+      {notification && (
+        <AccountabilityModal
+          notification={notification}
+          onDismiss={markSeen}
+        />
+      )}
+    </>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   )
 }
