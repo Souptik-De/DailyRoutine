@@ -44,3 +44,10 @@ export const completionsApi = {
 export const insightsApi = {
   get: (days: number = 14) => api.get("/api/insights", { params: { days } }),
 };
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+export const notificationsApi = {
+  getUnseen: () => api.get("/api/notifications/unseen"),
+  markSeen: (id: string) => api.post(`/api/notifications/${id}/seen`),
+  testTrigger: () => api.post("/api/notifications/test-trigger"),
+};
