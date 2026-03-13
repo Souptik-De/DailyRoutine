@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from app.config import get_db, DEMO_USER_ID
+from app.routers.completions import get_all_completions_dict
 
 
 def calculate_streak(habit_id: str) -> dict:
@@ -7,25 +7,13 @@ def calculate_streak(habit_id: str) -> dict:
     Calculate current streak and longest streak for a habit.
     Reads all completion docs and computes streaks based on consecutive days.
     """
-    db = get_db()
-    completions_ref = (
-        db.collection("users")
-        .document(DEMO_USER_ID)
-        .collection("completions")
-    )
-
-    # Fetch all docs where this habit was completed
-    # Firestore structure: completions/{date} -> {habit_id: true}
-    # We query all date docs and filter for this habit
-    all_dates_ref = completions_ref.stream()
+    comp_dict = get_all_completions_dict()
 
     completed_dates = set()
-    for doc in all_dates_ref:
-        data = doc.to_dict()
-        if data and data.get(habit_id) is True:
-            # doc.id is the date string YYYY-MM-DD
+    for date_str, completed_ids in comp_dict.items():
+        if habit_id in completed_ids:
             try:
-                d = date.fromisoformat(doc.id)
+                d = date.fromisoformat(date_str)
                 completed_dates.add(d)
             except ValueError:
                 pass

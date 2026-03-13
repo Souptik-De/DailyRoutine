@@ -1,12 +1,29 @@
 from fastapi import APIRouter, HTTPException
 from datetime import date, timedelta
 from app.config import get_db, DEMO_USER_ID
+import app.services.cache as cache
 
 router = APIRouter(prefix="/api/completions", tags=["completions"])
 
 
 def completions_collection():
     return get_db().collection("users").document(DEMO_USER_ID).collection("completions")
+
+
+def get_all_completions_dict():
+    cached = cache.get_cache("completions")
+    if cached is not None:
+        return cached
+
+    docs = completions_collection().stream()
+    result = {}
+    for doc in docs:
+        data = doc.to_dict() or {}
+        completed = [habit_id for habit_id, checked in data.items() if checked is True]
+        result[doc.id] = completed
+        
+    cache.set_cache("completions", result)
+    return result
 
 
 @router.get("/range")
@@ -21,17 +38,12 @@ async def get_completions_range(start_date: str, end_date: str):
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
 
+    comp_dict = get_all_completions_dict()
     result = {}
     current = start
     while current <= end:
         date_str = current.isoformat()
-        doc = completions_collection().document(date_str).get()
-        if doc.exists:
-            data = doc.to_dict() or {}
-            completed = [habit_id for habit_id, checked in data.items() if checked is True]
-            result[date_str] = completed
-        else:
-            result[date_str] = []
+        result[date_str] = comp_dict.get(date_str, [])
         current += timedelta(days=1)
 
     return result
@@ -40,13 +52,8 @@ async def get_completions_range(start_date: str, end_date: str):
 @router.get("/{date_str}")
 async def get_completions_for_date(date_str: str):
     """Get all completed habit IDs for a specific date."""
-    doc = completions_collection().document(date_str).get()
-    if not doc.exists:
-        return {"date": date_str, "completed_habit_ids": []}
-
-    data = doc.to_dict() or {}
-    completed = [habit_id for habit_id, checked in data.items() if checked is True]
-    return {"date": date_str, "completed_habit_ids": completed}
+    comp_dict = get_all_completions_dict()
+    return {"date": date_str, "completed_habit_ids": comp_dict.get(date_str, [])}
 
 
 @router.post("/{date_str}/{habit_id}", status_code=200)
@@ -54,6 +61,16 @@ async def mark_complete(date_str: str, habit_id: str):
     """Mark a habit as complete on a given date."""
     doc_ref = completions_collection().document(date_str)
     doc_ref.set({habit_id: True}, merge=True)
+    
+    # Update cache
+    cached = cache.get_cache("completions")
+    if cached is not None:
+        if date_str not in cached:
+            cached[date_str] = []
+        if habit_id not in cached[date_str]:
+            cached[date_str].append(habit_id)
+        cache.update_cache_in_place("completions", cached)
+
     return {"date": date_str, "habit_id": habit_id, "completed": True}
 
 
@@ -64,4 +81,12 @@ async def mark_incomplete(date_str: str, habit_id: str):
     doc = doc_ref.get()
     if doc.exists:
         doc_ref.update({habit_id: False})
+        
+    # Update cache
+    cached = cache.get_cache("completions")
+    if cached is not None:
+        if date_str in cached and habit_id in cached[date_str]:
+            cached[date_str].remove(habit_id)
+        cache.update_cache_in_place("completions", cached)
+
     return {"date": date_str, "habit_id": habit_id, "completed": False}
