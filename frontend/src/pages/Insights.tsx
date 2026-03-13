@@ -78,6 +78,16 @@ const SENTIMENT_COLORS: Record<string, string> = {
 
 const THEME_COLORS = ["#84B179", "#A2CB8B", "#C7EABB", "#639922", "#EF9F27"]
 
+const SENTIMENT_EMOJIS: Record<string, string> = {
+  Joyful: "😄",
+  Content: "😊",
+  Neutral: "😐",
+  Anxious: "😰",
+  Sad: "😢",
+  Lethargic: "😴",
+  Overwhelmed: "🤯",
+}
+
 // ── Loading skeleton ───────────────────────────────────────────────────────────
 function Skeleton() {
   return (
@@ -339,41 +349,32 @@ export default function Insights() {
                   }}
                 />
                 <span
-                  className="text-lg font-black relative z-10"
-                  style={{ color: score !== null ? moodColor(score) : "rgba(255,255,255,0.2)" }}
+                  className="text-sm font-bold relative z-10 leading-none"
+                  style={{ color: score !== null ? moodColor(score) : "rgba(255,255,255,0.25)" }}
                 >
                   {format(date, "d")}
                 </span>
-                {sentiment && (
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground relative z-10 mt-0.5 leading-none">
-                    {sentiment}
+                {sentiment ? (
+                  <span className="text-xl relative z-10 mt-1 leading-none drop-shadow-sm">
+                    {SENTIMENT_EMOJIS[sentiment] ?? "😐"}
                   </span>
-                )}
-                {/* dot indicator */}
-                {score !== null && (
-                  <div
-                    className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full"
-                    style={{ backgroundColor: moodColor(score) }}
-                  />
+                ) : (
+                  <span className="text-lg relative z-10 mt-1 leading-none opacity-15">
+                    —
+                  </span>
                 )}
               </div>
             )
           })}
         </div>
-        {/* Legend */}
-        <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground font-medium">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#639922" }} />
-            Good (&gt;0.3)
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#EF9F27" }} />
-            Neutral
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "#E24B4A" }} />
-            Low (&lt;-0.3)
-          </div>
+        {/* Emoji Legend */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs text-muted-foreground font-medium">
+          {Object.entries(SENTIMENT_EMOJIS).map(([label, emoji]) => (
+            <div key={label} className="flex items-center gap-1">
+              <span className="text-sm">{emoji}</span>
+              <span>{label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
