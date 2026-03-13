@@ -18,8 +18,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <aside className="w-64 flex-shrink-0 glass border-r border-white/5 flex flex-col py-6 px-4 fixed h-full z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
         {/* Logo */}
         <div className="flex items-center gap-2 px-2 mb-10">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-500/30">
-            <Sparkles className="w-4 h-4 text-white" />
+          <div className="flex items-center justify-center">
+            <img src="/logoooo.svg" alt="DailyRoutine Logo" className="w-8 h-8" />
           </div>
           <div>
             <h1 className="text-sm font-bold text-foreground leading-none">DailyRoutine</h1>
