@@ -109,7 +109,6 @@ export default function History() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Calendar */}
         <div className="lg:col-span-2 glass rounded-3xl p-8 relative overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 rounded-full blur-[80px] pointer-events-none" />
           {/* Month nav */}
           <div className="flex items-center justify-between mb-5">
             <Button
@@ -174,7 +173,7 @@ export default function History() {
           {/* Days grid */}
           {loading ? (
             <div className="flex items-center justify-center h-40">
-              <div className="w-6 h-6 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+              <div className="w-6 h-6 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
             </div>
           ) : (
             <div className="grid grid-cols-7 gap-1">
@@ -194,22 +193,22 @@ export default function History() {
                     key={dateStr}
                     onClick={() => setSelectedDay(isSelected ? null : dateStr)}
                     className={cn(
-                      "relative aspect-square flex flex-col items-center justify-center rounded-2xl text-base font-bold transition-all duration-300 hover:scale-[1.05] hover:bg-white/10 hover:shadow-lg",
+                      "relative aspect-square flex flex-col items-center justify-center rounded-2xl text-base font-bold transition-all duration-300 hover:scale-[1.05] hover:bg-white/10 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)]",
                       !isSameMonth(day, currentMonth) && "opacity-30",
-                      today && !isSelected && "ring-2 ring-violet-500/80 shadow-[0_0_15px_rgba(139,92,246,0.3)] text-violet-300",
-                      isSelected && "bg-gradient-to-br from-violet-500 to-indigo-500 text-white shadow-[0_0_20px_rgba(139,92,246,0.5)] scale-110 z-10 border-0 ring-2 ring-white/20"
+                      today && !isSelected && "ring-2 ring-brand-500/80 shadow-[0_4px_10px_rgba(0,0,0,0.3)] text-brand-300",
+                      isSelected && "bg-brand-500 text-white shadow-[0_8px_20px_rgba(0,0,0,0.5)] scale-110 z-10 border-0 ring-2 ring-white/20"
                     )}
                     style={{
                       background: rate > 0 && !isSelected
-                        ? `rgba(139, 92, 246, ${rate * 0.4})`
+                        ? `rgba(132, 177, 121, ${rate * 0.4})`
                         : undefined,
                     }}
                   >
-                    <span className={cn("relative z-10", !isSelected && today ? "text-violet-300" : (isSelected ? "text-white" : "text-foreground"))}>
+                    <span className={cn("relative z-10", !isSelected && today ? "text-brand-300" : (isSelected ? "text-white" : "text-foreground"))}>
                       {format(day, "d")}
                     </span>
                     {hasJournal && (
-                      <div className={cn("absolute bottom-2 w-1.5 h-1.5 rounded-full transition-colors", isSelected ? "bg-white" : "bg-pink-400")} />
+                      <div className={cn("absolute bottom-2 w-1.5 h-1.5 rounded-full transition-colors", isSelected ? "bg-white" : "bg-brand-300 shadow-[0_1px_3px_rgba(0,0,0,0.4)]")} />
                     )}
                   </button>
                 )
@@ -220,11 +219,11 @@ export default function History() {
           {/* Legend */}
           <div className="flex items-center gap-4 mt-4 pt-4 border-t border-white/5">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <div className="w-3 h-3 rounded-sm bg-violet-500/35" />
+              <div className="w-3 h-3 rounded-sm bg-brand-500/35" />
               Habits done
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <div className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-300 opacity-80" />
               Journal entry
             </div>
           </div>
@@ -234,9 +233,8 @@ export default function History() {
         <div className="glass rounded-3xl p-8 flex flex-col gap-8 relative overflow-y-auto shadow-[0_8px_40px_rgba(0,0,0,0.25)] animate-fade-in-up md:max-h-[calc(100vh-12rem)] md:sticky md:top-24 flex-shrink-0" style={{ animationDelay: "100ms" }}>
           {selectedDay ? (
             <>
-              <div className="absolute top-0 right-0 w-48 h-48 bg-pink-500/10 rounded-full blur-[60px] pointer-events-none" />
               <div className="relative z-10 flex-shrink-0">
-                <p className="text-xs text-violet-400 uppercase tracking-[0.2em] font-bold mb-2">
+                <p className="text-xs text-brand-400 uppercase tracking-[0.2em] font-bold mb-2 shadow-black/50">
                   {format(parseISO(selectedDay), "EEEE")}
                 </p>
                 <h3 className="text-3xl font-extrabold text-foreground tracking-tight">
@@ -247,7 +245,7 @@ export default function History() {
               {/* Journal */}
               <div className="flex-1 relative z-10">
                 <div className="flex items-center gap-2 mb-4">
-                  <BookOpen className="w-4 h-4 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]" />
+                  <BookOpen className="w-4 h-4 text-brand-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" />
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Journal</p>
                 </div>
                 {selectedDayData?.journal ? (
@@ -277,7 +275,7 @@ export default function History() {
                     <DialogContainer>
                       <DialogContent className="pointer-events-auto relative flex h-auto w-full max-w-[600px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-zinc-950/90 shadow-2xl backdrop-blur-2xl">
                         <div className="p-8 max-h-[80vh] overflow-y-auto">
-                          <DialogTitle className="text-3xl font-bold text-pink-400 mb-2 flex items-center gap-3">
+                          <DialogTitle className="text-3xl font-bold text-brand-300 mb-2 flex items-center gap-3">
                             <BookOpen className="w-6 h-6" />
                             Journal Entry
                           </DialogTitle>
@@ -313,7 +311,7 @@ export default function History() {
               {/* Habits */}
               <div className="relative z-10">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-400 shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
                   Habits
                 </p>
                 {habits.length === 0 ? (
@@ -325,9 +323,9 @@ export default function History() {
                       return (
                         <Dialog key={habit.id}>
                           <DialogTrigger className="w-full">
-                            <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5 hover:bg-white/10 transition-colors w-full cursor-pointer">
+                            <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5 hover:bg-white/10 transition-colors w-full cursor-pointer shadow-sm">
                               {done ? (
-                                <CheckCircle2 className="w-5 h-5 text-violet-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)] flex-shrink-0" />
+                                <CheckCircle2 className="w-5 h-5 text-brand-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] flex-shrink-0" />
                               ) : (
                                 <Circle className="w-5 h-5 text-white/20 flex-shrink-0" />
                               )}
@@ -351,20 +349,20 @@ export default function History() {
                                 
                                 {typeof habit.current_streak === 'number' && (
                                   <div className="flex gap-4 mt-6">
-                                    <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5">
-                                      <div className="flex items-center justify-center gap-1.5 text-orange-400 mb-2">
-                                        <Flame className="w-4 h-4 text-orange-400 drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
-                                        <span className="text-xs font-bold tracking-wider uppercase text-orange-200">Current</span>
+                                    <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5 shadow-inner">
+                                      <div className="flex items-center justify-center gap-1.5 text-brand-400 mb-2">
+                                        <Flame className="w-4 h-4 text-brand-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
+                                        <span className="text-xs font-bold tracking-wider uppercase text-brand-200">Current</span>
                                       </div>
-                                      <p className="text-2xl font-black text-white">{habit.current_streak}</p>
+                                      <p className="text-2xl font-black text-white drop-shadow-md">{habit.current_streak}</p>
                                       <p className="text-xs text-muted-foreground font-medium mt-0.5">days</p>
                                     </div>
-                                    <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5">
-                                      <div className="flex items-center justify-center gap-1.5 text-yellow-400 mb-2">
-                                        <Trophy className="w-4 h-4 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]" />
-                                        <span className="text-xs font-bold tracking-wider uppercase text-yellow-200">Best</span>
+                                    <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5 shadow-inner">
+                                      <div className="flex items-center justify-center gap-1.5 text-brand-400 mb-2">
+                                        <Trophy className="w-4 h-4 text-brand-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
+                                        <span className="text-xs font-bold tracking-wider uppercase text-brand-200">Best</span>
                                       </div>
-                                      <p className="text-2xl font-black text-white">{habit.longest_streak}</p>
+                                      <p className="text-2xl font-black text-white drop-shadow-md">{habit.longest_streak}</p>
                                       <p className="text-xs text-muted-foreground font-medium mt-0.5">days</p>
                                     </div>
                                   </div>

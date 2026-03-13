@@ -4,44 +4,49 @@
 
 @layer base {
   :root {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
+    --background: 140 25% 6%;
+    --foreground: 140 20% 90%;
 
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
+    --muted: 140 20% 12%;
+    --muted-foreground: 140 10% 60%;
 
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 140 20% 12%;
+    --accent-foreground: 100 35% 67%;
 
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
+    --popover: 140 30% 9%;
+    --popover-foreground: 140 20% 95%;
 
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
+    --border: 140 20% 18%;
+    --input: 140 20% 18%;
 
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
+    --card: 140 30% 9%;
+    --card-foreground: 140 20% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 1.2%;
+    --primary: 107.5 27% 58%;
+    --primary-foreground: 140 50% 10%;
 
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 100 35% 67%;
+    --secondary-foreground: 140 50% 10%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --ring: 216 34% 17%;
+    --ring: 107.5 27% 58%;
 
     --radius: 0.75rem;
 
-    /* Custom brand colors */
-    --indigo: 239 84% 67%;
-    --violet: 258 90% 66%;
-    --pink: 330 81% 60%;
-    --cyan: 188 91% 42%;
-    --amber: 43 96% 56%;
-    --emerald: 158 64% 52%;
+    /* Custom brand colors matching the palette */
+    --brand-1: 107.5 27% 58%;
+    --brand-2: 100 35% 67%;
+    --brand-3: 105 48% 82%;
+    --brand-4: 74 67% 85%;
+    
+    --indigo: 107.5 27% 58%;
+    --violet: 100 35% 67%;
+    --pink: 105 48% 82%;
+    --cyan: 74 67% 85%;
+    --amber: 74 80% 70%;
+    --emerald: 107.5 27% 58%;
   }
 }
 
@@ -52,37 +57,6 @@
   body {
     @apply bg-background text-foreground font-sans antialiased overflow-x-hidden;
     min-height: 100vh;
-  }
-
-  /* Animated background blobs */
-  body::before,
-  body::after {
-    content: "";
-    position: fixed;
-    width: 60vw;
-    height: 60vw;
-    max-width: 800px;
-    max-height: 800px;
-    border-radius: 50%;
-    filter: blur(100px);
-    z-index: -1;
-    opacity: 0.35;
-    pointer-events: none;
-  }
-
-  body::before {
-    top: -10%;
-    left: -10%;
-    background: radial-gradient(circle, rgba(139,92,246,0.5) 0%, rgba(99,102,241,0) 70%);
-    animation: blob 10s infinite alternate ease-in-out;
-  }
-
-  body::after {
-    bottom: -10%;
-    right: -10%;
-    background: radial-gradient(circle, rgba(236,72,153,0.3) 0%, rgba(244,63,94,0) 70%);
-    animation: blob 12s infinite alternate-reverse ease-in-out;
-    animation-delay: 2s;
   }
 }
 
@@ -102,23 +76,23 @@
   }
 
   .glass {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(20, 30, 20, 0.4);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6);
   }
   .glass-hover {
     @apply glass transition-all duration-300 ease-out;
   }
   .glass-hover:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    background: rgba(30, 45, 30, 0.5);
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8);
     transform: translateY(-2px);
   }
   .gradient-text {
-    background: linear-gradient(to right, #a78bfa, #f472b6, #60a5fa);
+    background: linear-gradient(to right, #84B179, #C7EABB, #A2CB8B);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -126,11 +100,11 @@
     animation: text-gradient 4s linear infinite;
   }
   .streak-glow {
-    box-shadow: 0 0 25px rgba(245, 158, 11, 0.4);
-    border-color: rgba(245, 158, 11, 0.5) !important;
+    box-shadow: 0 10px 30px rgba(100, 145, 89, 0.4);
+    border-color: rgba(132, 177, 121, 0.5) !important;
   }
   .text-glow {
-    text-shadow: 0 0 20px rgba(167, 139, 250, 0.5);
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
   }
 }
 

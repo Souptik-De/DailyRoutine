@@ -15,7 +15,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen noise-bg">
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 glass border-r border-white/5 flex flex-col py-6 px-4 fixed h-full z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+      <aside className="w-64 flex-shrink-0 overflow-hidden glass border-r border-white/5 flex flex-col py-6 px-4 fixed h-full z-20 shadow-[4px_0_24px_rgba(0,0,0,0.4)]">
+        {/* Animated background blobs for sidebar only */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-60">
+          <div className="absolute -top-[10%] -left-[10%] w-[120%] h-[120%] bg-[radial-gradient(circle,rgba(132,177,121,0.25)_0%,transparent_70%)] rounded-full blur-[50px] animate-blob"></div>
+          <div className="absolute -bottom-[10%] -right-[10%] w-[120%] h-[120%] bg-[radial-gradient(circle,rgba(162,203,139,0.2)_0%,transparent_70%)] rounded-full blur-[50px] animate-blob" style={{ animationDelay: '2s', animationDirection: 'alternate-reverse' }}></div>
+        </div>
+        
+        <div className="relative z-10 flex flex-col h-full">
         {/* Logo */}
         <div className="flex items-center gap-2 px-2 mb-10">
           <div className="flex items-center justify-center">
@@ -43,12 +50,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 )}
               >
                 {isActive && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500/30 to-transparent opacity-80 mix-blend-overlay" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-brand-500/30 to-transparent opacity-80 mix-blend-overlay" />
                 )}
                 <Icon
                   className={cn(
                     "w-4 h-4 transition-all duration-300 relative z-10",
-                    isActive ? "text-violet-300 drop-shadow-[0_0_8px_rgba(167,139,250,0.8)] scale-110" : "text-muted-foreground group-hover:scale-110"
+                    isActive ? "text-brand-300 drop-shadow-[0_0_8px_rgba(132,177,121,0.8)] scale-110" : "text-muted-foreground group-hover:scale-110"
                   )}
                 />
                 <span className="relative z-10">{label}</span>
@@ -58,13 +65,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Demo badge */}
-        <div className="mt-auto px-2">
+        <div className="mt-auto px-2 relative z-10">
           <div className="glass rounded-xl p-4 text-center border-t border-white/10 bg-gradient-to-b from-white/5 to-transparent">
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-1.5 hidden lg:block">Account</p>
             <div className="flex items-center justify-center gap-2">
               <p className="text-sm font-bold text-foreground">Demo User</p>
             </div>
           </div>
+        </div>
         </div>
       </aside>
 

@@ -89,7 +89,7 @@ export default function Journal() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -99,9 +99,9 @@ export default function Journal() {
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center border border-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.15)] overflow-hidden relative">
+            <div className="w-12 h-12 rounded-2xl bg-brand-500/20 flex items-center justify-center border border-brand-500/30 shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] overflow-hidden relative">
               <div className="absolute inset-0 bg-white/5" />
-              <BookOpen className="w-6 h-6 text-pink-400 relative z-10" />
+              <BookOpen className="w-6 h-6 text-brand-300 relative z-10" />
             </div>
             <h1 className="text-4xl font-extrabold text-foreground tracking-tight">Journal</h1>
           </div>
@@ -135,7 +135,7 @@ export default function Journal() {
         <span>{wordCount} {wordCount === 1 ? "word" : "words"}</span>
         {entry && (
           <span className="flex items-center gap-1.5 opacity-80">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
             Last saved: {(() => {
               const utcStr = entry.updated_at || entry.created_at;
               if (!utcStr) return "Unknown";
@@ -157,7 +157,7 @@ export default function Journal() {
           value={content}
           onChange={(e) => { setContent(e.target.value); setSaved(false) }}
           placeholder="What's on your mind today? Reflect on your goals, feelings, and experiences..."
-          className="min-h-[500px] text-lg leading-relaxed p-8 rounded-3xl border-white/10 bg-black/40 resize-none focus-visible:ring-1 focus-visible:ring-pink-500/50 shadow-[0_8px_40px_rgba(0,0,0,0.3)] focus-visible:shadow-[0_0_40px_rgba(236,72,153,0.3)] backdrop-blur-3xl transition-all duration-300 relative z-10 placeholder:text-muted-foreground/30 font-medium"
+          className="min-h-[500px] text-lg leading-relaxed p-8 rounded-3xl border-white/10 bg-black/40 resize-none focus-visible:ring-1 focus-visible:ring-brand-500/50 shadow-[0_8px_40px_rgba(0,0,0,0.3)] focus-visible:shadow-[0_4px_20px_rgba(0,0,0,0.5)] backdrop-blur-3xl transition-all duration-300 relative z-10 placeholder:text-muted-foreground/30 font-medium"
         />
       </div>
 
@@ -167,10 +167,10 @@ export default function Journal() {
           onClick={handleSave}
           disabled={saving || !content.trim()}
           className={cn(
-            "gap-2 h-12 px-8 rounded-xl font-bold shadow-[0_4px_14px_0_rgba(236,72,153,0.39)] hover:shadow-[0_6px_20px_rgba(236,72,153,0.23)] hover:-translate-y-0.5 transition-all duration-200 text-base",
+            "gap-2 h-12 px-8 rounded-xl font-bold hover:-translate-y-0.5 transition-all duration-200 text-base",
             saved
-              ? "bg-emerald-500 hover:bg-emerald-600 text-white border-0 shadow-[0_4px_14px_0_rgba(16,185,129,0.39)]"
-              : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0"
+              ? "bg-brand-400 hover:bg-brand-500 text-white border-0 shadow-[0_4px_14px_0_rgba(0,0,0,0.4)]"
+              : "bg-brand-500 hover:bg-brand-600 text-white border-0 shadow-[0_4px_14px_0_rgba(0,0,0,0.4)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.5)]"
           )}
         >
           {saved ? (

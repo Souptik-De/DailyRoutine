@@ -102,7 +102,7 @@ const HabitForm = ({
       <Button
         size="sm"
         onClick={onSubmit}
-        className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white border-0"
+        className="bg-brand-500 hover:bg-brand-600 text-white border-0 shadow-[0_2px_10px_rgba(0,0,0,0.3)]"
       >
         {submitLabel}
       </Button>
@@ -192,7 +192,7 @@ export default function Habits() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-brand-500 border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -206,7 +206,7 @@ export default function Habits() {
         </div>
         <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) resetForm() }}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-400 hover:to-indigo-400 text-white border-0 shadow-[0_4px_14px_0_rgba(139,92,246,0.39)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.23)] hover:-translate-y-0.5 transition-all duration-200 gap-2 h-11 px-6 rounded-xl font-semibold">
+            <Button className="bg-brand-500 hover:bg-brand-400 text-white border-0 shadow-[0_4px_14px_0_rgba(0,0,0,0.4)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.5)] hover:-translate-y-0.5 transition-all duration-200 gap-2 h-11 px-6 rounded-xl font-semibold">
               <Plus className="w-5 h-5" />
               New Habit
             </Button>
@@ -241,14 +241,13 @@ export default function Habits() {
           {habits.map((habit, i) => (
             <div 
               key={habit.id} 
-              className="glass-hover rounded-2xl p-6 flex flex-col gap-5 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_12px_40px_-10px_rgba(0,0,0,0.4)] transition-all duration-300 animate-fade-in-up"
+              className="glass-hover rounded-2xl p-6 flex flex-col gap-5 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[0_12px_40px_-10px_rgba(0,0,0,0.6)] transition-all duration-300 animate-fade-in-up"
               style={{ animationDelay: `${i * 100}ms` }}
             >
-              <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none" style={{ backgroundColor: habit.color }} />
               
               <div className="flex items-start justify-between gap-2 relative z-10">
                 <div className="flex items-center gap-4">
-                  <div className="w-4 h-8 rounded-full flex-shrink-0 shadow-lg" style={{ backgroundColor: habit.color, boxShadow: `0 0 15px ${habit.color}60` }} />
+                  <div className="w-4 h-8 rounded-full flex-shrink-0 shadow-[0_4px_8px_rgba(0,0,0,0.4)]" style={{ backgroundColor: habit.color }} />
                   <div>
                     <p className="text-lg font-bold text-foreground group-hover:text-white transition-colors">{habit.name}</p>
                     {habit.description && (
@@ -301,20 +300,20 @@ export default function Habits() {
               </div>
 
               <div className="flex gap-4 relative z-10 mt-2">
-                <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5 group-hover:border-white/10 transition-colors">
-                  <div className="flex items-center justify-center gap-1.5 text-orange-400 mb-2">
-                    <Flame className="w-4 h-4" />
-                    <span className="text-xs font-bold tracking-wider uppercase">Current</span>
+                <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5 group-hover:border-white/10 transition-colors shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)]">
+                  <div className="flex items-center justify-center gap-1.5 text-brand-400 mb-2">
+                    <Flame className="w-4 h-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
+                    <span className="text-xs font-bold tracking-wider uppercase text-brand-300">Current</span>
                   </div>
-                  <p className="text-2xl font-black text-foreground">{habit.current_streak}</p>
+                  <p className="text-2xl font-black text-foreground drop-shadow-md">{habit.current_streak}</p>
                   <p className="text-xs text-muted-foreground font-medium mt-0.5">days</p>
                 </div>
-                <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5 group-hover:border-white/10 transition-colors">
-                  <div className="flex items-center justify-center gap-1.5 text-yellow-400 mb-2">
-                    <Trophy className="w-4 h-4" />
-                    <span className="text-xs font-bold tracking-wider uppercase">Best</span>
+                <div className="flex-1 bg-black/20 rounded-xl p-4 text-center border border-white/5 group-hover:border-white/10 transition-colors shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)]">
+                  <div className="flex items-center justify-center gap-1.5 text-brand-400 mb-2">
+                    <Trophy className="w-4 h-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
+                    <span className="text-xs font-bold tracking-wider uppercase text-brand-300">Best</span>
                   </div>
-                  <p className="text-2xl font-black text-foreground">{habit.longest_streak}</p>
+                  <p className="text-2xl font-black text-foreground drop-shadow-md">{habit.longest_streak}</p>
                   <p className="text-xs text-muted-foreground font-medium mt-0.5">days</p>
                 </div>
               </div>

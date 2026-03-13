@@ -18,6 +18,13 @@ export default {
         sans: ['Outfit', 'sans-serif'],
       },
       colors: {
+        brand: {
+          100: "#E8F5BD",
+          200: "#C7EABB",
+          300: "#A2CB8B",
+          400: "#84B179",
+          500: "#69975e",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
