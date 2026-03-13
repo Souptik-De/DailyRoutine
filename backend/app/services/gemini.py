@@ -35,9 +35,15 @@ def _parse_response(text: str) -> dict:
     """Parse and validate the JSON response from the LLM."""
     cleaned = text.strip()
     if cleaned.startswith("```"):
-        cleaned = cleaned.split("\n", 1)[1] if "\n" in cleaned else cleaned[3:]
+        # Remove markdown code block markers
+        if cleaned.startswith("```json"):
+            cleaned = cleaned.removeprefix("```json")
+        else:
+            cleaned = cleaned.removeprefix("```")
+            
     if cleaned.endswith("```"):
-        cleaned = cleaned[:-3]
+        cleaned = cleaned.removesuffix("```")
+
     cleaned = cleaned.strip()
 
     data = json.loads(cleaned)

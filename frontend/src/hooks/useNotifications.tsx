@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react"
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react"
 import { notificationsApi } from "@/lib/api"
 
 export interface Notification {
@@ -17,9 +17,16 @@ export interface Notification {
   seen_at: string | null
 }
 
-const POLL_INTERVAL = 30_000 // 30 seconds
+interface NotificationsContextType {
+  notification: Notification | null
+  markSeen: (id: string) => Promise<void>
+}
 
-export function useNotifications() {
+const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined)
+
+const POLL_INTERVAL = 30_000
+
+export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const [notification, setNotification] = useState<Notification | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -33,12 +40,12 @@ export function useNotifications() {
         setNotification(null)
       }
     } catch {
-      // Silently fail — not critical
+      // Silently fail
     }
   }, [])
 
   useEffect(() => {
-    poll() // initial check
+    poll()
     timerRef.current = setInterval(poll, POLL_INTERVAL)
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
@@ -57,5 +64,17 @@ export function useNotifications() {
     []
   )
 
-  return { notification, markSeen }
+  return (
+    <NotificationsContext.Provider value={{ notification, markSeen }}>
+      {children}
+    </NotificationsContext.Provider>
+  )
+}
+
+export function useNotifications() {
+  const context = useContext(NotificationsContext)
+  if (context === undefined) {
+    throw new Error("useNotifications must be used within a NotificationsProvider")
+  }
+  return context
 }

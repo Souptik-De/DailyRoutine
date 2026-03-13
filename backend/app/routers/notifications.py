@@ -1,7 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
+import json
 from app.config import get_db, DEMO_USER_ID
-from app.services.accountability import run_accountability_check
+from app.services.accountability import (
+    run_accountability_check, 
+    audit_broken_streaks, 
+    generate_accountability_message
+)
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
@@ -36,13 +41,6 @@ async def mark_seen(notif_id: str):
 
     now = datetime.utcnow().isoformat()
     doc_ref.update({"seen_at": now})
-
-    # The user asked: "after user clicks 'i hear you , back to it' stop showing notification still it's again broken".
-    # By marking it seen, `useNotifications` stops showing it.
-    # To stop the *backend* from generating endless daily notifications for a streak that stays broken day-after-day, 
-    # we would need to track `acknowledged_broken_streak` on the habit itself.
-    # For now, ensuring `seen_at` is set solves the immediate loop of the *same* notification popping up.
-
     return {"id": notif_id, "seen_at": now}
 
 
@@ -52,8 +50,7 @@ async def test_trigger():
     Manually trigger Agent A to scan for broken streaks.
     Use this for testing without waiting for the hourly schedule.
     """
-    import asyncio
-    result = await asyncio.to_thread(run_accountability_check)
+    result = await run_accountability_check()
     return result
 
 

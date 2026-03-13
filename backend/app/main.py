@@ -11,13 +11,13 @@ logger = logging.getLogger(__name__)
 _audit_task = None
 
 
-async def _hourly_audit_loop():
-    """Background loop: run accountability audit every hour."""
+async def _audit_loop():
+    """Background loop: run accountability audit every 30 seconds."""
     while True:
         try:
-            await asyncio.sleep(3600)  # 1 hour
-            logger.info("[Scheduler] Running hourly accountability audit...")
-            await asyncio.to_thread(run_accountability_check)
+            await asyncio.sleep(30)  # 30 seconds
+            logger.info("[Scheduler] Running accountability audit...")
+            await run_accountability_check()
         except asyncio.CancelledError:
             break
         except Exception as e:
@@ -27,8 +27,8 @@ async def _hourly_audit_loop():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _audit_task
-    _audit_task = asyncio.create_task(_hourly_audit_loop())
-    logger.info("[Scheduler] Accountability audit scheduled (every 1h).")
+    _audit_task = asyncio.create_task(_audit_loop())
+    logger.info("[Scheduler] Accountability audit scheduled (every 30s).")
     yield
     _audit_task.cancel()
     logger.info("[Scheduler] Accountability audit stopped.")

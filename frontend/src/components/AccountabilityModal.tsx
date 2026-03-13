@@ -1,138 +1,95 @@
-import { useState } from "react"
+import React, { useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { TrendingUp, BookOpen, Calendar } from "lucide-react"
+import { type Notification } from "@/hooks/useNotifications.tsx"
 import { format } from "date-fns"
-import { type Notification } from "@/hooks/useNotifications"
-import { cn } from "@/lib/utils"
-import { Calendar } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 
 interface AccountabilityModalProps {
   notification: Notification
-  onDismiss: (id: string) => void
+  onClose: () => void
 }
 
-export default function AccountabilityModal({ notification, onDismiss }: AccountabilityModalProps) {
-  const [showJournal, setShowJournal] = useState(false)
-
-  // Handle the 'I hear you' button which should dismiss the notification itself
-  const handleAcknowledge = () => {
-    onDismiss(notification.id)
-  }
-
-  // Format date if it exists
-  const formattedDate = notification.journal_reference?.date 
-    ? format(new Date(notification.journal_reference.date + "T00:00:00"), "EEEE, MMMM d, yyyy")
-    : "Referenced Journal Entry"
+export default function AccountabilityModal({
+  notification,
+  onClose,
+}: AccountabilityModalProps) {
+  const [showJournalRef, setShowJournalRef] = useState(false)
 
   return (
-    <>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center">
-        {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/95 backdrop-blur-sm" />
+    <Dialog open={!!notification} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl bg-[#0a0a0a] border-green-900/50 shadow-2xl shadow-green-900/20 p-8">
+        <DialogHeader>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-full bg-green-950/50 border border-green-500/30">
+              <TrendingUp className="w-6 h-6 text-green-400" />
+            </div>
+            <DialogTitle className="text-2xl font-bold text-green-500 tracking-tight">
+              Ruthless Accountability
+            </DialogTitle>
+          </div>
+        </DialogHeader>
 
-        {/* Modal */}
-        <div className="relative z-10 max-w-lg w-full mx-6 animate-fade-in-up">
-          {/* Top bar — stark red */}
-          <div className="h-1 w-full bg-red-600 rounded-t-sm" />
+        <div className="space-y-6">
+          <div className="p-6 rounded-xl bg-green-950/20 border border-green-900/30 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-1 h-full bg-green-500/50" />
+            <p className="text-xl text-green-50 leading-relaxed font-medium italic">
+              "{notification.message}"
+            </p>
+          </div>
 
-          <div className="bg-zinc-950 border border-zinc-800 rounded-b-2xl p-8 md:p-10 shadow-[0_20px_80px_rgba(0,0,0,0.9)]">
-            {/* Context header */}
-            <div className="mb-6">
-              <p className="text-xs font-mono uppercase tracking-[0.25em] text-zinc-500 mb-2">
-                Streak broken
+          <div className="flex items-center justify-between text-sm text-green-500/60 px-2 uppercase tracking-widest font-semibold">
+            <span>Missed: {notification.habit_name}</span>
+            <span>Streak: {notification.streak_count} days</span>
+          </div>
+
+          {notification.journal_reference && (
+            <div 
+              onClick={() => setShowJournalRef(true)}
+              className="mt-6 p-4 rounded-lg bg-[#111] border border-green-900/20 hover:border-green-500/30 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-green-500/40 font-mono">REFERENCED JOURNAL ENTRY</span>
+                <BookOpen className="w-4 h-4 text-green-500/30 group-hover:text-green-500/60" />
+              </div>
+              <p className="text-sm text-green-100/60 line-clamp-2 italic">
+                {notification.journal_reference.content_snippet}
               </p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-3xl font-black text-red-500 tabular-nums">
-                  {notification.streak_count}
-                </span>
-                <span className="text-sm font-semibold text-zinc-400">
-                  day streak on
-                </span>
-                <span className="text-lg font-bold text-zinc-200">
-                  {notification.habit_name}
-                </span>
+              <div className="mt-2 text-right">
+                <span className="text-[10px] text-green-500/30 font-mono uppercase tracking-tighter">Click to see full entry</span>
               </div>
             </div>
+          )}
 
-            {/* Divider */}
-            <div className="h-px bg-zinc-800 mb-6" />
-
-            {/* AI message */}
-            <div className="text-lg md:text-xl leading-relaxed font-medium text-zinc-100 tracking-tight mb-8">
-              {notification.message}
-            </div>
-
-            {/* Journal Reference (if any) - Now Clickable */}
-            {notification.journal_reference && (
-              <button 
-                onClick={() => setShowJournal(true)}
-                className="w-full text-left bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/80 transition-all rounded-xl p-4 mb-8 group cursor-pointer"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                    Referenced Journal Entry
-                  </p>
-                  <span className="text-xs text-zinc-500 font-medium bg-zinc-800 group-hover:bg-zinc-700 transition-colors px-2 py-0.5 rounded-full">
-                    {notification.journal_reference.date}
-                  </span>
-                </div>
-                <p className="text-sm font-medium text-zinc-300 italic opacity-80 line-clamp-2">
-                  "...{notification.journal_reference.content_snippet}..."
-                </p>
-                <p className="text-xs text-brand-400 mt-2 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                  Click to read full entry →
-                </p>
-              </button>
-            )}
-
-            {/* Actions */}
-            <div className="flex flex-col items-center gap-3">
-              <button
-                onClick={handleAcknowledge}
-                className={cn(
-                  "w-full py-3.5 px-6 rounded-xl text-base font-bold tracking-wide",
-                  "bg-zinc-100 text-zinc-950 hover:bg-white",
-                  "transition-all duration-200 hover:-translate-y-0.5",
-                  "shadow-[0_4px_14px_rgba(255,255,255,0.1)]"
-                )}
-              >
-                I hear you. Back to it.
-              </button>
-            </div>
+          <div className="flex justify-end pt-4">
+            <button
+              onClick={onClose}
+              className="px-8 py-3 rounded-lg bg-green-600 hover:bg-green-500 text-black font-bold transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-green-900/40"
+            >
+              I HEAR YOU. BACK TO IT.
+            </button>
           </div>
         </div>
-      </div>
+      </DialogContent>
 
-      {/* Expanded Journal Dialog */}
-      <Dialog open={showJournal} onOpenChange={setShowJournal}>
-        <DialogContent className="max-w-md z-[110]">
-          {notification.journal_reference && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-brand-300" />
-                  {formattedDate}
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="space-y-4 mt-2">
-                <div>
-                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">
-                    Journal Entry
-                  </span>
-                  <div className="text-sm text-foreground/90 leading-relaxed bg-white/5 rounded-2xl p-4 border border-white/5 max-h-60 overflow-y-auto whitespace-pre-wrap">
-                    {notification.journal_reference.content}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+      {/* Full Journal Entry Dialog */}
+      <Dialog open={showJournalRef} onOpenChange={setShowJournalRef}>
+        <DialogContent className="max-w-xl bg-[#0a0a0a] border-green-900/50 shadow-2xl p-8">
+          <DialogHeader>
+            <div className="flex items-center gap-2 mb-2 text-green-500/60">
+              <Calendar className="w-4 h-4" />
+              <span className="text-xs font-mono uppercase tracking-widest">
+                Journal Entry — {notification.journal_reference?.date}
+              </span>
+            </div>
+            <DialogTitle className="text-xl font-bold text-green-400">
+              Detailed Context
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 p-6 rounded-lg bg-green-950/10 border border-green-950 text-green-50 leading-relaxed italic">
+            {notification.journal_reference?.content}
+          </div>
         </DialogContent>
       </Dialog>
-    </>
+    </Dialog>
   )
 }

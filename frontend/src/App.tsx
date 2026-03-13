@@ -6,7 +6,7 @@ import Journal from "@/pages/Journal"
 import History from "@/pages/History"
 import Insights from "@/pages/Insights"
 import AccountabilityModal from "@/components/AccountabilityModal"
-import { useNotifications } from "@/hooks/useNotifications"
+import { useNotifications } from "@/hooks/useNotifications.tsx"
 import "./index.css"
 
 function AppContent() {
@@ -28,7 +28,7 @@ function AppContent() {
       {notification && (
         <AccountabilityModal
           notification={notification}
-          onDismiss={markSeen}
+          onClose={() => markSeen(notification.id)}
         />
       )}
     </>

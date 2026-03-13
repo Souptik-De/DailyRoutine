@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { BookOpen, Flame, Trophy, TrendingUp, CheckCircle2, ArrowRight, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link } from "react-router-dom"
+import { useNotifications } from "@/hooks/useNotifications.tsx"
 
 interface Habit {
   id: string
@@ -62,6 +63,8 @@ export default function Dashboard() {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  const { notification } = useNotifications()
 
   const toggleHabit = async (habitId: string, isCompleted: boolean) => {
     try {

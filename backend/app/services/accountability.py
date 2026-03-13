@@ -1,17 +1,11 @@
-"""
-The Ruthless Accountability Coach — Two-agent notification system.
-
-Agent A (Auditor): Scans for broken streaks (>48h since last completion).
-Agent B (Enforcer): Generates personalized accountability messages via Groq.
-
-Uses GROQ_API_KEY_2 to avoid exhausting the primary key's rate limits.
-"""
 import os
 import time
 import asyncio
+import json
 import logging
 from datetime import datetime, date, timedelta
-from groq import Groq
+from typing import cast, List, Dict, Any
+from groq import AsyncGroq
 from dotenv import load_dotenv
 from app.config import get_db, DEMO_USER_ID
 
@@ -21,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 # ── Groq client (separate key for accountability agent) ────────────────────────
 _api_key_2 = os.getenv("GROQ_API_KEY_2", "").strip().strip('"')
-_client = Groq(api_key=_api_key_2)
-_MODEL = "llama-3.1-8b-instant"
+_client = AsyncGroq(api_key=_api_key_2)
+_MODEL = "llama-3.3-70b-versatile"
 
 ENFORCER_SYSTEM_PROMPT = (
     "You are a brutally honest accountability coach. You do not sugarcoat. "
@@ -79,90 +73,74 @@ def _completions_col():
 
 # ── Agent A — The Auditor ──────────────────────────────────────────────────────
 
+from app.services.streak import calculate_streak
+
 def audit_broken_streaks() -> list[dict]:
     """
-    Scan all active habits for broken streaks (>48h since last completion).
-    Returns list of payloads for Agent B. Skips habits already alerted today.
+    Scan all active habits for broken streaks or same-day inaction.
+    Trigger A: If the habit is not completed today.
+    Uses identical logic to the dashboard for streak counting.
     """
-    today_str = date.today().isoformat()
-
+    today_iso = date.today().isoformat()
+    
     # Load active habits
     habits = []
     for doc in _habits_col().stream():
         h = doc.to_dict()
-        if h.get("is_active", True):
-            habits.append({"id": doc.id, "name": h.get("name", ""), **h})
+        if h and h.get("is_active", True):
+            habits.append({"id": doc.id, "name": h.get("name", "Unnamed Habit")})
 
     if not habits:
         logger.info("[Auditor] No active habits found.")
         return []
 
-    # Load all completions
+    # Map dates to habits completed on that date
     comp_dict = {}
     for doc in _completions_col().stream():
         data = doc.to_dict() or {}
-        completed_ids = [hid for hid, checked in data.items() if checked is True]
-        comp_dict[doc.id] = completed_ids
+        comp_dict[doc.id] = [hid for hid, checked in data.items() if checked is True]
 
-    cutoff = date.today() - timedelta(hours=48)
     payloads = []
-
     for habit in habits:
-        habit_id = habit["id"]
-        habit_name = habit["name"]
+        h_id = habit["id"]
+        h_name = habit["name"]
 
-        # Find last completed date for this habit
-        last_completed = None
-        streak_count = 0
-        sorted_dates = sorted(comp_dict.keys(), reverse=True)
+        # 1. Dashboard logic for streak
+        streak_data = calculate_streak(h_id)
+        current_streak = streak_data["current_streak"]
 
-        for date_str in sorted_dates:
-            if habit_id in comp_dict.get(date_str, []):
-                try:
-                    last_completed = date.fromisoformat(date_str)
-                    break
-                except ValueError:
-                    continue
-
-        # Calculate what the streak was before it broke
-        if last_completed:
-            streak_count = 0
-            check = last_completed
-            while check.isoformat() in comp_dict and habit_id in comp_dict.get(check.isoformat(), []):
-                streak_count += 1
-                check -= timedelta(days=1)
-
-        # Check if streak is broken (is yesterday complete?)
-        # A streak is active if it was completed either today or yesterday. 
-        # If it wasn't completed yesterday or today, it is broken!
-        yesterday_str = (date.today() - timedelta(days=1)).isoformat()
-        today_iso_str = date.today().isoformat()
+        # 2. Check if completed today
+        is_completed_today = h_id in comp_dict.get(today_iso, [])
         
-        is_completed_today = habit_id in comp_dict.get(today_iso_str, [])
-        is_completed_yesterday = habit_id in comp_dict.get(yesterday_str, [])
-        
-        if is_completed_today or is_completed_yesterday:
-            continue  # Still active, skip 
-
-        if last_completed is None and not comp_dict:
-            continue  # No completion data at all
-
-        # Dedup: check streak_alerts for today
-        alert_doc_id = f"{habit_id}_{today_str}"
-        alert_ref = _streak_alerts_col().document(alert_doc_id)
-        if alert_ref.get().exists:
-            logger.info("[Auditor] Already alerted for %s today, skipping.", habit_name)
+        # Trigger if NOT completed today. 
+        # This covers "streak goes to 1" (first day missed) and "streak goes to 0" (broken).
+        if is_completed_today:
             continue
 
-        payload = {
+        # Find the last completion date for context in the prompt
+        last_date_str = "never"
+        valid_dates = sorted([d for d in comp_dict.keys() if len(d) == 10], reverse=True)
+        for d_str in valid_dates:
+            if h_id in comp_dict[d_str]:
+                last_date_str = d_str
+                break
+
+        # 3. "Do not stop the notification for any reason"
+        # We REMOVE the check for existing streak_alerts for today to allow continuous pressure.
+        # This will trigger Agent B every time the orchestrator runs until the habit is marked done.
+
+        # 4. Success! Build the payload for Agent B
+        entries, total_count = _get_journal_context(str(h_name))
+        payloads.append({
             "user_id": DEMO_USER_ID,
-            "habit_id": habit_id,
-            "habit_name": habit_name,
-            "streak_count": streak_count,
-            "last_completed_date": last_completed.isoformat() if last_completed else "never",
-        }
-        payloads.append(payload)
-        logger.info("[Auditor] Broken streak detected: %s (%d days)", habit_name, streak_count)
+            "habit_id": h_id,
+            "habit_name": str(h_name),
+            "streak_count": current_streak,
+            "last_completed_date": last_date_str,
+            "journal_entries": entries,
+            "journal_total_count": total_count,
+        })
+        logger.info("[Auditor] Inaction detected for %s. Streak status: %d", h_name, current_streak)
 
     return payloads
 
@@ -192,7 +170,7 @@ def _get_journal_context(habit_name: str) -> tuple[list[dict], int]:
             mention_entries.append(entry)
 
     # Merge, dedup, limit to 10
-    combined = all_entries + mention_entries[:5]
+    combined = all_entries + list(mention_entries)[:5]
     seen_ids = set()
     unique = []
     for e in combined:
@@ -200,48 +178,42 @@ def _get_journal_context(habit_name: str) -> tuple[list[dict], int]:
             seen_ids.add(e["id"])
             unique.append(e)
 
-    return unique[:10], total_count
+    return list(unique)[:10], total_count
 
 
-def _call_groq(user_message: str) -> str:
-    """Call Groq with retry. Raises on persistent failure."""
-    last_error = None
-    for attempt in range(2):
-        try:
-            response = _client.chat.completions.create(
-                model=_MODEL,
-                response_format={"type": "json_object"},
-                messages=[
-                    {"role": "system", "content": ENFORCER_SYSTEM_PROMPT},
-                    {"role": "user", "content": user_message},
-                ],
-                temperature=0.7,
-                max_tokens=400,
-            )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            last_error = e
-            logger.warning("[Enforcer] Groq attempt %d failed: %s", attempt + 1, e)
-            if attempt == 0:
-                time.sleep(5)
-
-    raise RuntimeError(f"Groq call failed after 2 attempts: {last_error}")
+async def _call_groq(user_message: str):
+    """Call Groq with standard completion. Returns full string."""
+    try:
+        completion = await _client.chat.completions.create(
+            model=_MODEL,
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": ENFORCER_SYSTEM_PROMPT},
+                {"role": "user", "content": user_message},
+            ],
+            temperature=0.7,  # Restore stable temperature
+            max_tokens=500
+        )
+        return completion.choices[0].message.content or ""
+    except Exception as e:
+        logger.error(f"Groq API call failed: {e}")
+        return ""
 
 
-def generate_accountability_message(payload: dict) -> dict | None:
+async def generate_accountability_message(payload: dict) -> dict | None:
     """
     Agent B: Generate a personalized accountability message and save it.
 
     Returns the notification dict or None on failure.
     """
-    import json
     habit_name = payload["habit_name"]
     habit_id = payload["habit_id"]
     streak_count = payload["streak_count"]
     last_completed = payload["last_completed_date"]
-
-    # Get journal context
-    entries, total_count = _get_journal_context(habit_name)
+    
+    # Extract bundled context from Payload A
+    entries = payload.get("journal_entries", [])
+    total_count = payload.get("journal_total_count", 0)
     entries_by_id = {e["id"]: e for e in entries}
 
     now = datetime.utcnow().isoformat()
@@ -269,34 +241,12 @@ def generate_accountability_message(payload: dict) -> dict | None:
     )
 
     try:
-        raw_response = _call_groq(user_message).strip()
-        logger.info(f"Raw response: {raw_response}")
-        if raw_response.startswith("```json"):
-            raw_response = raw_response[7:]
-        elif raw_response.startswith("```"):
-            raw_response = raw_response[3:]
-        if raw_response.endswith("```"):
-            raw_response = raw_response[:-3]
+        raw_response_str = cast(str, await _call_groq(user_message))
+        logger.info(f"Raw response: {raw_response_str}")
         
-        parsed = json.loads(raw_response.strip())
+        parsed = json.loads(raw_response_str.strip())
         message_text = parsed.get("message", "")
         ref_id = parsed.get("referenced_journal_id")
-
-        # If too long, ask Groq to shorten
-        if len(message_text) > 280:
-            logger.info("[Enforcer] Message too long (%d chars), requesting shorter version.", len(message_text))
-            shorten_msg = (
-                f"This message is {len(message_text)} characters. Shorten it to under 280 characters "
-                f"while keeping the same tone, the specific journal reference, and the call to action. "
-                f"Return ONLY a valid JSON with keys \"message\" and \"referenced_journal_id\".\n\nmessage:\n{message_text}"
-            )
-            try:
-                short_raw = _call_groq(shorten_msg)
-                short_parsed = json.loads(short_raw)
-                message_text = short_parsed.get("message", message_text[:277] + "...")
-                ref_id = short_parsed.get("referenced_journal_id", ref_id)
-            except Exception:
-                message_text = message_text[:277] + "..."
 
         journal_ref = None
         if ref_id and ref_id in entries_by_id:
@@ -348,22 +298,31 @@ def _save_alert(habit_id: str, habit_name: str, notification_id: str):
 
 # ── Orchestrator ───────────────────────────────────────────────────────────────
 
-def run_accountability_check():
+def run_accountability_check_sync():
+    """
+    Synchronous wrapper for run_accountability_check, since the router uses BackgroundTasks which needs a sync wrapper or exact async await.
+    """
+    asyncio.run(run_accountability_check())
+
+async def run_accountability_check():
     """
     Main orchestration: Agent A finds broken streaks, Agent B generates messages.
     Called by the hourly scheduler and the test-trigger endpoint.
     """
     logger.info("[Orchestrator] Starting accountability check...")
-    payloads = audit_broken_streaks()
+    payloads = await asyncio.to_thread(audit_broken_streaks)
 
     if not payloads:
         logger.info("[Orchestrator] No broken streaks found.")
         return {"checked": True, "alerts_sent": 0}
 
     sent = 0
-    for payload in payloads:
-        result = generate_accountability_message(payload)
-        if result:
+    # Process the LLM calls concurrently to speed things up tremendously
+    tasks = [generate_accountability_message(payload) for payload in payloads]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    for result in results:
+        if isinstance(result, dict):
             sent += 1
 
     logger.info("[Orchestrator] Accountability check complete. Sent %d alerts.", sent)

@@ -1,29 +1,10 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from datetime import date, timedelta
+from app.services.completions import completions_collection, get_all_completions_dict
 from app.config import get_db, DEMO_USER_ID
 import app.services.cache as cache
 
 router = APIRouter(prefix="/api/completions", tags=["completions"])
-
-
-def completions_collection():
-    return get_db().collection("users").document(DEMO_USER_ID).collection("completions")
-
-
-def get_all_completions_dict():
-    cached = cache.get_cache("completions")
-    if cached is not None:
-        return cached
-
-    docs = completions_collection().stream()
-    result = {}
-    for doc in docs:
-        data = doc.to_dict() or {}
-        completed = [habit_id for habit_id, checked in data.items() if checked is True]
-        result[doc.id] = completed
-        
-    cache.set_cache("completions", result)
-    return result
 
 
 @router.get("/range")
@@ -80,7 +61,7 @@ async def break_streak(habit_id: str):
     # Trigger agent A to check and fire a message
     from app.services.accountability import run_accountability_check
     import asyncio
-    await asyncio.to_thread(run_accountability_check)
+    await run_accountability_check()
     return {"status": "streak_broken", "habit_id": habit_id}
 
 

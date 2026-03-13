@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from app.routers.completions import get_all_completions_dict
+from app.services.completions import get_all_completions_dict
 
 
 def calculate_streak(habit_id: str) -> dict:
